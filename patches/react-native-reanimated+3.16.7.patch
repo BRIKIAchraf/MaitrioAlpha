@@ -1,0 +1,44 @@
+diff --git a/node_modules/react-native-reanimated/lib/module/logger/logger.js b/node_modules/react-native-reanimated/lib/module/logger/logger.js
+index 1234567..abcdefg 100644
+--- a/node_modules/react-native-reanimated/lib/module/logger/logger.js
++++ b/node_modules/react-native-reanimated/lib/module/logger/logger.js
+@@ -1,4 +1,8 @@
+ 'use strict';
++// Initialize __reanimatedLoggerConfig if not set (e.g., on web)
++if (typeof global !== 'undefined' && typeof global.__reanimatedLoggerConfig === 'undefined') {
++  global.__reanimatedLoggerConfig = { strict: false, level: 1, logFunction: function(data) { try { console.warn(data && data.message && data.message.content); } catch(e) {} } };
++}
+ 
+ import { addLogBoxLog } from "./LogBox.js";
+ const DOCS_URL = 'https://docs.swmansion.com/react-native-reanimated/docs/debugging/logger-configuration';
+@@ -81,14 +85,14 @@ export function registerLoggerConfig(config) {
+ export function replaceLoggerImplementation(logFunction) {
+   'worklet';
+ 
+-  registerLoggerConfig({
+-    ...__reanimatedLoggerConfig,
++  registerLoggerConfig({
++    ...(typeof __reanimatedLoggerConfig !== 'undefined' ? __reanimatedLoggerConfig : global.__reanimatedLoggerConfig),
+     logFunction
+   });
+ }
+ 
+ export function updateLoggerConfig(options) {
+   'worklet';
+ 
+-  registerLoggerConfig({
+-    ...__reanimatedLoggerConfig,
++  registerLoggerConfig({
++    ...(typeof __reanimatedLoggerConfig !== 'undefined' ? __reanimatedLoggerConfig : global.__reanimatedLoggerConfig),
+     // Don't reuse previous level and strict values from the global config
+     level: options?.level ?? DEFAULT_LOGGER_CONFIG.level,
+     strict: options?.strict ?? DEFAULT_LOGGER_CONFIG.strict
+@@ -108,7 +112,7 @@ export function updateLoggerConfig(options) {
+ function handleLog(level, message, options) {
+   'worklet';
+ 
+-  const config = __reanimatedLoggerConfig;
++  const config = (typeof __reanimatedLoggerConfig !== 'undefined' ? __reanimatedLoggerConfig : global.__reanimatedLoggerConfig) || global.__reanimatedLoggerConfig;
+   if (
+   // Don't log if the log is marked as strict-only and the config doesn't
+   // enable strict logging

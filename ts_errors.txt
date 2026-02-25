@@ -1,0 +1,63 @@
+app/(artisan)/_layout.tsx(20,45): error TS2820: Type '"list.bullet.fill"' is not assignable to type 'SFSymbols7_0'. Did you mean '"list.bullet"'?
+app/(artisan)/missions.tsx(84,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: LinearGradientProps): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+  Overload 2 of 2, '(props: LinearGradientProps, context: any): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+app/(auth)/register.tsx(94,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: LinearGradientProps): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+  Overload 2 of 2, '(props: LinearGradientProps, context: any): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+app/(client)/index.tsx(134,15): error TS2783: 'key' is specified more than once, so this usage will be overwritten.
+app/(client)/missions.tsx(83,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: LinearGradientProps): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+  Overload 2 of 2, '(props: LinearGradientProps, context: any): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+app/index.tsx(199,11): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: LinearGradientProps): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+  Overload 2 of 2, '(props: LinearGradientProps, context: any): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+app/mission/[id].tsx(94,31): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(104,22): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(116,25): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(131,30): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(150,33): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(166,16): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(167,33): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(167,45): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(169,33): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(185,32): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(205,23): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(212,10): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(212,32): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(215,7): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(215,19): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(216,7): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(216,25): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(217,7): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/[id].tsx(217,26): error TS18048: 'mission' is possibly 'undefined'.
+app/mission/new.tsx(169,25): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: LinearGradientProps): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+  Overload 2 of 2, '(props: LinearGradientProps, context: any): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+app/mission/new.tsx(270,27): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: LinearGradientProps): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+  Overload 2 of 2, '(props: LinearGradientProps, context: any): LinearGradient', gave the following error.
+    Type '{ colors: [string, string]; style: RegisteredStyle<AbsoluteFillStyle>; start: { x: number; y: number; }; end: { x: number; y: number; }; borderRadius: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.
+      Property 'borderRadius' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<LinearGradient> & Readonly<LinearGradientProps>'.

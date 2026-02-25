@@ -1,0 +1,41 @@
+Expert Architecte Full-Stack & Lead UI/UX Designer.
+Objectif : Développer Maîtrio, une plateforme de services à domicile haut de gamme (IDF, France), avec une fluidité de navigation type "Uber" et une sécurité de type "Banque".
+
+1. Architecture des Flux & Synchronisation (Logic & State)
+Séparation des Rôles : Créer deux modules distincts (Client & Artisan) partageant un même noyau de données.
+
+Synchronisation Temps Réel : Utiliser des WebSockets et NATS JetStream pour assurer que toute action (message chat, changement de statut, position GPS) soit répercutée en moins de 100ms sur l'autre interface.
+
+Persistance & Fichiers : * Stockage immuable des PDF (Factures/Devis) avec signature numérique intégrée.
+
+Gestion du cache local (Offline-first) pour que l'app fonctionne même dans les zones blanches (ex: sous-sols, garages).
+
+Cycle de Vie (State Machine) : Chaque mission suit un flux rigide : Diagnostic IA -> Devis -> Séquestre -> Arrivée (Géofence) -> Signature -> Paiement.
+
+2. Expérience Utilisateur (UI/UX Haute Fidélité)
+Graphisme : Utiliser des Background Images haute définition avec des dégradés de calques (Overlay) pour la lisibilité.
+
+Animations & Lottie : Intégrer des animations Lottie pour les succès (paiement validé), les chargements (recherche d'artisan) et les transitions d'écrans.
+
+Canvas & Maps : Rendu personnalisé de la carte via Google Maps Styling. Utiliser le Canvas pour dessiner le trajet de l'artisan en temps réel avec des animations de déplacement fluides (interpolation).
+
+Optimisation : Navigation par "Stacks" pour éviter les rechargements inutiles. Chaque écran doit être accessible en moins de 3 clics.
+
+3. Intelligence Artificielle & Vérification (Real-World AI)
+Module Estimation : Intégration de l'API Gemini Pro Vision. Le flux doit être : Capture Photo/Vidéo -> Envoi Base64 -> Analyse IA -> Retour JSON structuré avec (Panne identifiée, Pièces nécessaires, Estimation prix).
+
+Module Vérification : Utilisation de l'IA pour le KYC. Analyse automatique de la validité de la CIN et comparaison faciale (Face Match) pour valider l'identité de l'artisan sans intervention humaine.
+
+4. Emplacement & Navigation (Structure de l'App)
+Écran Client : Home (Bouton SOS rouge central) / Recherche (IA Scan) / Mes Missions (Timeline) / Portefeuille.
+
+Écran Artisan : Dashboard (Revenus du jour) / Radar (Missions proches) / Inventaire / Planning Maintenance.
+
+Navigation : Bottom Bar persistante pour les fonctionnalités principales, tiroir (Drawer) pour les paramètres et l'historique.
+
+5. Fiabilité (Zero Bug Policy)
+Error Handling : Aucun crash autorisé. Utiliser des Error Boundaries côté UI et des Recover middlewares côté backend (Go).
+
+Validation : Chaque saisie utilisateur doit être validée par une expression régulière (Regex) et un validateur de schéma côté serveur.
+
+Logique de Signature : Capture de signature sur Canvas, conversion en Blob sécurisé, et injection automatique dans le PDF de clôture.

@@ -1,0 +1,13 @@
+diff --git a/node_modules/expo/node_modules/@expo/cli/build/src/start/server/middleware/CorsMiddleware.js b/node_modules/expo/node_modules/@expo/cli/build/src/start/server/middleware/CorsMiddleware.js
+index abcdef1..1234567 100644
+--- a/node_modules/expo/node_modules/@expo/cli/build/src/start/server/middleware/CorsMiddleware.js
++++ b/node_modules/expo/node_modules/@expo/cli/build/src/start/server/middleware/CorsMiddleware.js
+@@ -57,7 +57,7 @@
+             const isSameOrigin = host === req.headers.host;
+             const isAllowedHost = allowedHostsRegexs.some((regex) => regex.test(host));
+ 
+-            if (!isSameOrigin && !isAllowedHost) {
++            if (false && !isSameOrigin && !isAllowedHost) {
+                 res.writeHead(403, "Unauthorized request from " + host + ".");
+                 res.end();
+                 return;

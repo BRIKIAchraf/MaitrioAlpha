@@ -1,0 +1,364 @@
+👤 FONCTIONNALITÉS CLIENT (DÉTAILLÉES)
+🟦 1️⃣ Onboarding & Authentification
+Onboarding animé
+
+Slides Lottie :
+
+confiance
+
+garantie
+
+artisans vérifiés
+
+process terrain
+
+Bouton “Commencer”
+
+Inscription / Connexion
+
+Email + mot de passe
+
+Vérification email
+
+Mot de passe oublié
+
+Acceptation CGU / RGPD
+
+🟦 2️⃣ Profil Client
+
+Nom / prénom
+
+Téléphone
+
+Photo
+
+Adresse principale
+
+Autres logements
+
+Préférences (notifications, langue)
+
+Historique missions
+
+Moyens de paiement
+
+Support & aide
+
+Suppression compte
+
+🟦 3️⃣ Création de demande (cœur du produit)
+Étape 1 : Type de service
+
+Débarras
+
+Serrurerie
+
+Plomberie
+
+Électricité
+
+Nettoyage
+
+Froid
+
+Étape 2 : Description intelligente
+
+Texte libre
+
+Photos / vidéo
+
+Niveau urgence
+
+Budget estimé
+
+Date souhaitée
+
+Étape 3 : Estimation IA
+
+Prix min/max
+
+Durée
+
+Artisan recommandé
+
+Étape 4 : Validation
+
+Créneau horaire
+
+Conditions
+
+Paiement en séquestre
+
+Confirmation
+
+🟦 4️⃣ Suivi de mission
+
+Statuts visibles :
+
+En attente
+
+Artisan assigné
+
+En route
+
+Arrivé
+
+En cours
+
+Terminé
+
+Validé
+
+En litige
+
+Fonctions :
+
+carte GPS artisan
+
+chat temps réel
+
+notifications
+
+bouton “Annuler”
+
+bouton “Signaler problème”
+
+🟦 5️⃣ Paiement & Facturation
+
+Paiement sécurisé
+
+Argent bloqué jusqu’à validation
+
+Facture PDF
+
+Historique paiements
+
+Remboursement possible
+
+TVA visible
+
+🟦 6️⃣ Évaluation & avis
+
+Note globale
+
+Notes par critère :
+
+qualité
+
+ponctualité
+
+communication
+
+Commentaire écrit
+
+Influence Trust Score
+
+🟦 7️⃣ Support & litiges
+
+Créer ticket support
+
+Chat support Maîtrio
+
+Upload preuves
+
+Suivi litige
+
+Décision admin
+
+🟦 8️⃣ Dossier Maison
+
+Profil logement
+
+Historique interventions
+
+Photos
+
+Documents
+
+Score maintenance
+
+Rappels entretien
+
+🟦 9️⃣ Abonnement Premium (option)
+
+Priorité
+
+Garantie étendue
+
+Support VIP
+
+Réductions
+
+Concierge dédié
+
+🧑‍🔧 FONCTIONNALITÉS ARTISAN (DÉTAILLÉES)
+🟧 1️⃣ Onboarding & KYC
+Inscription artisan
+
+Nom entreprise
+
+Spécialité
+
+Zone géographique
+
+Disponibilités
+
+Upload documents
+
+Carte identité
+
+SIRET / Kbis
+
+Assurance RC Pro
+
+RIB
+
+Statuts :
+
+En vérification
+
+Vérifié
+
+Refusé
+
+🟧 2️⃣ Profil Artisan
+
+Photo
+
+Description
+
+Métiers
+
+Zone
+
+Disponibilité
+
+Score confiance
+
+Badge
+
+Avis clients
+
+Historique missions
+
+🟧 3️⃣ Réception des missions
+
+Notification nouvelle mission
+
+Détails :
+
+adresse
+
+description
+
+photos
+
+prix
+
+durée
+
+Bouton :
+
+Accepter
+
+Refuser
+
+🟧 4️⃣ Gestion mission (process terrain)
+Avant déplacement
+
+Bouton “En route”
+
+Navigation GPS
+
+Arrivée (Check-in)
+
+GPS validé
+
+Photo obligatoire
+
+Heure enregistrée
+
+Intervention
+
+Notes
+
+Photos intermédiaires
+
+Fin (Check-out)
+
+Photos après
+
+Rapport
+
+Signature client
+
+Bouton “Terminer”
+
+🟧 5️⃣ Revenus & Wallet
+
+Solde disponible
+
+Historique paiements
+
+Factures artisan
+
+Retrait bancaire
+
+Commission Maîtrio
+
+🟧 6️⃣ Communication
+
+Chat client
+
+Notifications
+
+Appels (option future)
+
+🟧 7️⃣ Qualité & Trust Score
+
+Voir notes reçues
+
+Voir critères
+
+Historique incidents
+
+Amélioration score
+
+🟧 8️⃣ Support & litiges
+
+Répondre à litige
+
+Upload preuves
+
+Suivi décision admin
+
+🟧 9️⃣ Planning & disponibilité
+
+Calendrier
+
+Jours off
+
+Heures
+
+Zones couvertes
+
+🟧 🔟 Avantages Elite (Premium artisans)
+
+Missions prioritaires
+
+Meilleure visibilité
+
+Commission réduite
+
+Formation Maîtrio
+
+Badge Elite
+
+🔄 WORKFLOW SIMPLIFIÉ
+Client :
+
+Créer demande → payer → suivre → valider → noter
+
+Artisan :
+
+Recevoir mission → check-in → travailler → check-out → être payé
