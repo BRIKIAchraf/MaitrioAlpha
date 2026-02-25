@@ -19,6 +19,7 @@ import Colors from "@/constants/colors";
 import { useAuth } from "@/context/auth-context";
 import { useMissions, RatingCriteria } from "@/context/mission-context";
 import { useChat } from "@/context/chat-context";
+import { apiRequest } from "@/utils/api";
 
 const STATUS_STEPS = ["pending", "accepted", "en_route", "arrived", "in_progress", "completed", "validated"];
 
@@ -198,6 +199,30 @@ export default function MissionDetailScreen() {
     ]);
   }
 
+  async function handleEcoDeclare() {
+    if (!mission) return;
+    Alert.alert("Déclaration Eco-Impact", "Confirmez-vous avoir recyclé les déchets ou utilisé du matériel éco-responsable ?", [
+      { text: "Annuler", style: "cancel" },
+      {
+        text: "Déclarer (+5 pts)",
+        onPress: async () => {
+          setIsLoading(true);
+          try {
+            await apiRequest(`/missions/${mission.id}/eco`, {
+              method: "POST",
+              body: JSON.stringify({ points: 5 })
+            });
+            Alert.alert("Engagement Confirmé", "Félicitations ! Vos points Eco ont été ajoutés.");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          } catch (e: any) {
+            Alert.alert("Erreur", e.message);
+          }
+          setIsLoading(false);
+        },
+      },
+    ]);
+  }
+
   function handleRatingChange(key: keyof RatingCriteria, value: number) {
     Haptics.selectionAsync();
     const updated = { ...ratingData, [key]: value };
@@ -245,38 +270,41 @@ export default function MissionDetailScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.primaryLight]}
+        colors={mission.isSos ? ["#EF4444", "#991B1B"] : [Colors.primary, Colors.primaryLight]}
         style={[styles.headerGrad, { paddingTop: (insets.top || (Platform.OS === "web" ? 67 : 0)) + 8 }]}
       >
         <View style={styles.headerBar}>
-          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
+          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7, backgroundColor: "rgba(255,255,255,0.3)" }]} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
-          <Text style={styles.headerTitle} numberOfLines={1}>{mission.title}</Text>
-          <View style={{ width: 40 }} />
+          <Text style={styles.headerTitle} numberOfLines={1}>{mission.isSos ? "🚨 MISSION SOS" : mission.title}</Text>
+          <View style={styles.headerBadges}>
+            {mission.isSos && (
+              <View style={styles.sosPill}>
+                <Text style={styles.sosPillText}>URGENT</Text>
+              </View>
+            )}
+          </View>
         </View>
         <View style={styles.categoryRow}>
-          <View style={styles.catIconBox}>
-            <Ionicons name={(CATEGORY_ICONS[mission.category] || "build") as any} size={24} color={Colors.accent} />
+          <View style={[styles.catIconBox, mission.isSos && { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+            <Ionicons name={(CATEGORY_ICONS[mission.category] || "build") as any} size={24} color={mission.isSos ? "#fff" : Colors.accent} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.categoryLabel}>{mission.category}</Text>
-            <Text style={styles.clientLabel}>
+            <Text style={[styles.categoryLabel, mission.isSos && { color: "rgba(255,255,255,0.9)" }]}>{mission.category}</Text>
+            <Text style={[styles.clientLabel, mission.isSos && { color: "rgba(255,255,255,0.7)" }]}>
               {isArtisan ? `Client: ${mission.clientName}` : mission.artisanName ? `Artisan: ${mission.artisanName}` : "Votre demande"}
             </Text>
           </View>
-          {mission.urgency && mission.urgency !== "normal" && (
-            <View style={[styles.urgencyBadge, mission.urgency === "tres_urgent" && { backgroundColor: Colors.dangerLight }]}>
-              <Ionicons name="flash" size={12} color={mission.urgency === "tres_urgent" ? Colors.danger : Colors.warning} />
-              <Text style={[styles.urgencyText, { color: mission.urgency === "tres_urgent" ? Colors.danger : Colors.warning }]}>
-                {mission.urgency === "tres_urgent" ? "Tres urgent" : "Urgent"}
-              </Text>
+          {mission.isSos && (
+            <View style={styles.sosPriceBadge}>
+              <Text style={styles.sosPriceText}>50€ FIXE</Text>
             </View>
           )}
         </View>
-        <View style={[styles.statusBanner, { backgroundColor: sc.bg }]}>
-          <Ionicons name={sc.icon as any} size={18} color={sc.color} />
-          <Text style={[styles.statusBannerText, { color: sc.color }]}>{sc.label}</Text>
+        <View style={[styles.statusBanner, { backgroundColor: mission.isSos ? "rgba(255,255,255,0.15)" : sc.bg }]}>
+          <Ionicons name={sc.icon as any} size={18} color={mission.isSos ? "#fff" : sc.color} />
+          <Text style={[styles.statusBannerText, { color: mission.isSos ? "#fff" : sc.color }]}>{sc.label}</Text>
         </View>
       </LinearGradient>
 
@@ -468,6 +496,32 @@ export default function MissionDetailScreen() {
             {mission.rating.comment ? <Text style={styles.ratingCommentText}>{mission.rating.comment}</Text> : null}
           </View>
         )}
+
+        {/* Multimedia Report Section */}
+        {mission.report && (
+          <View style={styles.photoSection}>
+            <Text style={styles.sectionTitle}>Rapport & Preuves</Text>
+            <Text style={styles.reportText}>{mission.report}</Text>
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+              {mission.photos?.map((p: string, i: number) => (
+                <View key={i} style={styles.photoWrapper}>
+                  <Text style={styles.photoTag}>AVANT</Text>
+                  <View style={styles.photoPlaceholder}>
+                    <Ionicons name="image-outline" size={24} color={Colors.textMuted} />
+                  </View>
+                </View>
+              ))}
+              {mission.afterPhotos?.map((p: string, i: number) => (
+                <View key={i} style={styles.photoWrapper}>
+                  <Text style={[styles.photoTag, { backgroundColor: Colors.success }]}>APRÈS</Text>
+                  <View style={styles.photoPlaceholder}>
+                    <Ionicons name="image-outline" size={24} color={Colors.textMuted} />
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       {mission.status !== "cancelled" && mission.status !== "disputed" && (
@@ -519,7 +573,13 @@ export default function MissionDetailScreen() {
             <ActionButton label="Demarrer les travaux" icon="play-circle" onPress={handleStart} isLoading={isLoading} />
           )}
           {isArtisan && mission.artisanId === user?.id && mission.status === "in_progress" && (
-            <ActionButton label={showReport && reportText.trim() ? "Envoyer le rapport" : "Terminer la mission"} icon="checkmark-done-circle" onPress={handleComplete} isLoading={isLoading} gold />
+            <View style={{ gap: 10 }}>
+              <ActionButton label={showReport && reportText.trim() ? "Envoyer le rapport" : "Terminer la mission"} icon="checkmark-done-circle" onPress={handleComplete} isLoading={isLoading} gold />
+              <Pressable style={styles.ecoBtn} onPress={handleEcoDeclare}>
+                <Ionicons name="leaf-outline" size={18} color="#059669" />
+                <Text style={styles.ecoBtnText}>Déclaration Eco-Impact</Text>
+              </Pressable>
+            </View>
           )}
           {isClient && mission.status === "en_route" && (
             <ActionButton
@@ -716,4 +776,12 @@ const styles = StyleSheet.create({
   },
   quoteNotifText: { flex: 1, fontSize: 13, color: Colors.primary, fontFamily: "Inter_500Medium" },
   quoteNotifLink: { fontSize: 13, color: Colors.primary, fontFamily: "Inter_700Bold", textDecorationLine: "underline" },
+  headerBadges: { flexDirection: "row", alignItems: "center", gap: 8 },
+  sosPill: { backgroundColor: "#fff", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  sosPillText: { fontSize: 9, fontFamily: "Inter_800ExtraBold", color: "#EF4444" },
+  sosPriceBadge: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  sosPriceText: { fontSize: 12, fontFamily: "Inter_800ExtraBold", color: "#fff" },
+  reportText: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.textSecondary, lineHeight: 20 },
+  ecoBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, backgroundColor: "#ECFDF5", borderRadius: 16, borderWidth: 1, borderColor: "#10B981" },
+  ecoBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#059669" },
 });

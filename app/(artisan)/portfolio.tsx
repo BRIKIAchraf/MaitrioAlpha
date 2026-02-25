@@ -14,6 +14,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
+import { useAuth } from "@/context/auth-context";
+import { apiRequest } from "@/utils/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Alert } from "react-native";
 
 const { width } = Dimensions.get("window");
 
@@ -24,11 +28,34 @@ const MOCK_PROJECTS = [
 
 export default function PortfolioManagementScreen() {
     const insets = useSafeAreaInsets();
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
     const [projects, setProjects] = useState(MOCK_PROJECTS);
+
+    const addProjectMutation = useMutation({
+        mutationFn: async (newProject: any) => {
+            return apiRequest("/api/artisan/portfolio", {
+                method: "POST",
+                body: JSON.stringify({ ...newProject, artisanId: user?.id }),
+            });
+        },
+        onSuccess: () => {
+            Alert.alert("Succès", "Votre nouveau projet a été ajouté à votre portfolio.");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            // In a real app, we'd invalidate queries here
+            // queryClient.invalidateQueries({ queryKey: ["/api/artisan/portfolio"] });
+        },
+    });
 
     const addNewProject = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        // Simulation of project creation
+        // Simulation of trigger - in production this would open a form
+        addProjectMutation.mutate({
+            title: "Nouveau Projet Industriel",
+            category: "Général",
+            before: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=400",
+            after: "https://images.unsplash.com/photo-1542013936693-884638332954?q=80&w=400"
+        });
     };
 
     return (
@@ -54,7 +81,7 @@ export default function PortfolioManagementScreen() {
                 </View>
 
                 <Text style={styles.sectionTitle}>Chantiers Réalisés</Text>
-                {projects.map((project) => (
+                {projects.map((project: any) => (
                     <View key={project.id} style={styles.projectCard}>
                         <Text style={styles.projectTitle}>{project.title}</Text>
                         <Text style={styles.projectCat}>{project.category}</Text>

@@ -7,6 +7,7 @@ import {
     Pressable,
     Share,
     Dimensions,
+    Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,18 +15,37 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
+import { useAuth } from "@/context/auth-context";
+import { apiRequest } from "@/utils/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const { width } = Dimensions.get("window");
 
 export default function ReferralScreen() {
     const insets = useSafeAreaInsets();
-    const [referralCount, setReferralCount] = useState(3);
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+
+    const subscribeMutation = useMutation({
+        mutationFn: async () => {
+            return apiRequest("/premium/subscribe", {
+                method: "POST",
+                body: JSON.stringify({ userId: user?.id }),
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["user"] });
+            Alert.alert("Bienvenue Elite !", "Votre Maîtrio Pass est désormais actif. Profitez de vos avantages.");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+    });
 
     const onShare = async () => {
         try {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            const result = await Share.share({
-                message: "Hey ! Utilise Maîtrio pour tes travaux, c'est l'app la plus fiable. Voici mon code parrainage : MAITRIO-PROMO-2024",
+            const referralCode = user?.username || "INVITE";
+            await Share.share({
+                message: `Hey ! Utilise Maîtrio pour tes travaux, c'est l'app la plus fiable. Voici mon code parrainage : ${referralCode}`,
             });
         } catch (error) {
             console.log(error);
@@ -52,7 +72,7 @@ export default function ReferralScreen() {
                 <View style={styles.codeCard}>
                     <Text style={styles.codeLabel}>Votre code de parrainage</Text>
                     <Pressable style={styles.codeBox} onPress={onShare}>
-                        <Text style={styles.codeText}>MAITRIO-PROMO-2024</Text>
+                        <Text style={styles.codeText}>{user?.username || "CODE"}</Text>
                         <Ionicons name="copy-outline" size={20} color={Colors.primary} />
                     </Pressable>
                     <Pressable style={styles.shareBtn} onPress={onShare}>
@@ -62,11 +82,11 @@ export default function ReferralScreen() {
 
                 <View style={styles.statsRow}>
                     <View style={styles.statBox}>
-                        <Text style={styles.statVal}>{referralCount}</Text>
+                        <Text style={styles.statVal}>{user?.referralCount || 0}</Text>
                         <Text style={styles.statLabel}>Parrainages</Text>
                     </View>
                     <View style={styles.statBox}>
-                        <Text style={styles.statVal}>30€</Text>
+                        <Text style={styles.statVal}>{user?.loyaltyPoints || 0}€</Text>
                         <Text style={styles.statLabel}>Gagnés</Text>
                     </View>
                 </View>
@@ -76,19 +96,27 @@ export default function ReferralScreen() {
                     <View style={styles.passHeader}>
                         <View style={styles.passBadge}>
                             <Ionicons name="flash" size={14} color={Colors.accent} />
-                            <Text style={styles.passBadgeText}>MEMBRE ELITE</Text>
+                            <Text style={styles.passBadgeText}>{user?.isPremium ? "MEMBRE ELITE" : "PAS DE PASS"}</Text>
                         </View>
                         <MaterialCommunityIcons name="integrated-circuit-chip" size={40} color="rgba(255,255,255,0.1)" />
                     </View>
-                    <Text style={styles.passUser}>Status : Actif jusqu'au 12/05</Text>
+                    <Text style={styles.passUser}>Status : {user?.isPremium ? "Actif" : "Non souscrit"}</Text>
                     <View style={styles.passBenefits}>
                         <BenefitItem icon="timer-outline" text="Interventions prioritaires < 30min" />
                         <BenefitItem icon="cash-outline" text="-15% sur les frais de service" />
                         <BenefitItem icon="shield-checkmark-outline" text="Garantie Maîtrio Gold incluse" />
                     </View>
-                    <Pressable style={styles.managePassBtn}>
-                        <Text style={styles.managePassText}>Gérer mon abonnement</Text>
-                    </Pressable>
+                    {!user?.isPremium && (
+                        <Pressable
+                            style={({ pressed }: { pressed: boolean }) => [styles.managePassBtn, pressed && { opacity: 0.8 }]}
+                            onPress={() => subscribeMutation.mutate()}
+                            disabled={subscribeMutation.isLoading}
+                        >
+                            <Text style={styles.managePassText}>
+                                {subscribeMutation.isLoading ? "Activation..." : "Activer mon Maîtrio Pass"}
+                            </Text>
+                        </Pressable>
+                    )}
                 </LinearGradient>
 
                 <View style={{ height: 100 }} />

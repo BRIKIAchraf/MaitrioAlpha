@@ -7,22 +7,78 @@ import {
     Pressable,
     Image,
     TextInput,
+    Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    withRepeat,
+    withSequence,
+    withDelay,
+} from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 
-const MOCK_ITEMS = [
-    { id: "1", title: "Lot de 10 Vannes 1/4", price: 85, condition: "Neuf", type: "stock", image: "water-pump" },
-    { id: "2", title: "Perceuse Hilti TE 6-A", price: 210, condition: "Occasion", type: "used", image: "drill" },
-    { id: "3", title: "Câble RO2V 3G2.5 (50m)", price: 65, condition: "Neuf", type: "stock", image: "cable-data" },
-];
+import { useAuth } from "@/context/auth-context";
+import { apiRequest } from "@/utils/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function MarketplaceScreen() {
     const insets = useSafeAreaInsets();
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
     const [tab, setTab] = useState<"buy" | "sell">("buy");
+
+    const { data: inventory = [], isLoading } = useQuery({
+        queryKey: ["inventory", tab, user?.id],
+        queryFn: () => apiRequest(tab === "buy" ? "/api/inventory/marketplace" : `/artisans/${user?.id}/inventory`),
+        enabled: !!user?.id,
+    });
+
+    const buyMutation = useMutation({
+        mutationFn: async (item: any) => {
+            return apiRequest(`/inventory/${item.id}/purchase`, {
+                method: "POST",
+                body: JSON.stringify({ buyerId: user?.id, quantity: 1 }),
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["inventory"] });
+            Alert.alert("Succès", "Le matériel a été ajouté à votre inventaire.");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+        onError: (e: any) => {
+            Alert.alert("Erreur", e.message);
+        }
+    });
+
+    const handleBuy = (item: any) => {
+        if (tab === "sell") return;
+        Alert.alert(
+            "Confirmer l'achat",
+            `Voulez-vous acheter ${item.name} pour ${item.price}€ ?`,
+            [
+                { text: "Annuler", style: "cancel" },
+                { text: "Confirmer", onPress: () => buyMutation.mutate(item) }
+            ]
+        );
+    };
+
+    const createListing = useMutation({
+        mutationFn: (data: any) => apiRequest(`/artisans/${user?.id}/inventory`, {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["inventory"] });
+            Alert.alert("Succès", "Votre annonce a été publiée.");
+        },
+    });
 
     return (
         <View style={styles.container}>
@@ -67,27 +123,37 @@ export default function MarketplaceScreen() {
                     </LinearGradient>
                 </View>
 
-                <Text style={styles.sectionTitle}>Annonces Récentes</Text>
-                {MOCK_ITEMS.map((item) => (
+                <Text style={styles.sectionTitle}>{tab === "buy" ? "Annonces Récentes" : "Votre Stock"}</Text>
+                {inventory.filter((i: any) => tab === "buy" || i.artisanId === user?.id).map((item: any) => (
                     <View key={item.id} style={styles.productCard}>
                         <View style={styles.productIconBox}>
-                            <MaterialCommunityIcons name={item.image as any} size={30} color={Colors.primary} />
+                            <MaterialCommunityIcons name={item.type === 'used' ? "tools" : "package-variant-closed"} size={30} color={Colors.primary} />
                         </View>
                         <View style={styles.productInfo}>
                             <View style={styles.conditionRow}>
                                 <Text style={[styles.conditionTag, { backgroundColor: item.condition === 'Neuf' ? '#ECFDF5' : '#FFFBEB', color: item.condition === 'Neuf' ? '#059669' : '#D97706' }]}>
                                     {item.condition}
                                 </Text>
-                                <Text style={styles.itemType}>{item.type === 'stock' ? 'Surstock' : 'Matériel'}</Text>
+                                <Text style={styles.itemType}>{item.type === 'stock' ? 'Surstock' : 'Occasion'}</Text>
                             </View>
-                            <Text style={styles.productTitle}>{item.title}</Text>
+                            <Text style={styles.productTitle}>{item.name}</Text>
                             <Text style={styles.productPrice}>{item.price}€</Text>
+                            <Text style={styles.stockText}>Quantité: {item.quantity}</Text>
                         </View>
-                        <Pressable style={styles.buyBtn}>
-                            <Text style={styles.buyBtnText}>Voir</Text>
+                        <Pressable
+                            style={({ pressed }) => [styles.buyBtn, pressed && { opacity: 0.8 }]}
+                            onPress={() => handleBuy(item)}
+                        >
+                            <Text style={styles.buyBtnText}>{tab === "buy" ? "Acheter" : "Gérer"}</Text>
                         </Pressable>
                     </View>
                 ))}
+                {inventory.length === 0 && (
+                    <View style={styles.emptyItems}>
+                        <Ionicons name="cube-outline" size={48} color={Colors.textMuted} />
+                        <Text style={styles.emptyText}>Aucun article disponible.</Text>
+                    </View>
+                )}
                 <View style={{ height: 100 }} />
             </ScrollView>
 
@@ -129,5 +195,8 @@ const styles = StyleSheet.create({
     productPrice: { fontSize: 16, fontFamily: "Inter_800ExtraBold", color: Colors.primary, marginTop: 4 },
     buyBtn: { backgroundColor: Colors.surfaceSecondary, paddingHorizontal: 15, paddingVertical: 8, borderRadius: 10 },
     buyBtnText: { fontSize: 13, fontFamily: "Inter_700Bold", color: Colors.primary },
-    fab: { position: "absolute", bottom: 100, right: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.primary, alignItems: "center", justifyContent: "center", shadowColor: Colors.primary, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
+    fab: { position: "absolute", bottom: 40, right: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.primary, alignItems: "center", justifyContent: "center", shadowColor: Colors.primary, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
+    stockText: { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+    emptyItems: { alignItems: "center", marginTop: 40, opacity: 0.5 },
+    emptyText: { color: Colors.textMuted, fontSize: 14, marginTop: 10 },
 });

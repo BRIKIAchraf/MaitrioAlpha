@@ -55,6 +55,7 @@ export default function NewMissionScreen() {
   const [budget, setBudget] = useState("");
   const [scheduledDate, setScheduledDate] = useState(getTomorrow());
   const [scheduledTime, setScheduledTime] = useState("09:00");
+  const [isSos, setIsSos] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [estimation, setEstimation] = useState<EstimationResult | null>(null);
@@ -104,10 +105,12 @@ export default function NewMissionScreen() {
         title: title.trim(),
         description: description.trim(),
         address: address.trim(),
-        scheduledDate,
-        scheduledTime,
+        scheduledDate: isSos ? new Date().toISOString().split("T")[0] : scheduledDate,
+        scheduledTime: isSos ? new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : scheduledTime,
         photos: [],
         budget: budget ? parseInt(budget, 10) : undefined,
+        isSos,
+        escrowAmount: isSos ? 50 : 20, // Default escrow for demo
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.dismissAll();
@@ -171,6 +174,21 @@ export default function NewMissionScreen() {
           {step === 1 && (
             <View style={styles.stepContent}>
               <Text style={styles.stepTitle}>Quel type de travaux ?</Text>
+
+              <Pressable
+                style={[styles.sosToggle, isSos && styles.sosToggleActive]}
+                onPress={() => {
+                  setIsSos(!isSos);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                }}
+              >
+                <Ionicons name="flash" size={20} color={isSos ? "#fff" : Colors.danger} />
+                <Text style={[styles.sosText, isSos && styles.sosTextActive]}>URGENCE SOS (Intervention immédiate)</Text>
+                <View style={[styles.sosSwitch, isSos && styles.sosSwitchActive]}>
+                  <View style={[styles.sosKnob, isSos && styles.sosKnobActive]} />
+                </View>
+              </Pressable>
+
               <Text style={styles.stepSubtitle}>Sélectionnez une catégorie et décrivez votre besoin</Text>
 
               <View style={styles.categoriesGrid}>
@@ -633,4 +651,12 @@ const styles = StyleSheet.create({
   complexityLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.textSecondary },
   complexityBar: { height: 4, backgroundColor: "rgba(0,0,0,0.05)", borderRadius: 2, overflow: "hidden" },
   complexityFill: { height: "100%", backgroundColor: Colors.accent, borderRadius: 2 },
+  sosToggle: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: Colors.dangerLight, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: Colors.danger + "20", marginBottom: 10 },
+  sosToggleActive: { backgroundColor: Colors.danger, borderColor: Colors.danger },
+  sosText: { flex: 1, fontSize: 13, fontFamily: "Inter_700Bold", color: Colors.danger },
+  sosTextActive: { color: "#fff" },
+  sosSwitch: { width: 44, height: 24, backgroundColor: "rgba(0,0,0,0.1)", borderRadius: 12, padding: 2 },
+  sosSwitchActive: { backgroundColor: "rgba(255,255,255,0.3)" },
+  sosKnob: { width: 20, height: 20, backgroundColor: "#fff", borderRadius: 10 },
+  sosKnobActive: { transform: [{ translateX: 20 }] },
 });

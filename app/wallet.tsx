@@ -7,38 +7,31 @@ import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/auth-context";
 import { useMissions } from "@/context/mission-context";
+import { apiRequest } from "@/lib/query-client";
+import { useQuery } from "@tanstack/react-query";
 
 type TabKey = "all" | "received" | "pending";
 
 export default function WalletScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { getArtisanMissions, getMissionsByClient } = useMissions();
   const [activeTab, setActiveTab] = useState<TabKey>("all");
 
+  const { data: walletData, isLoading: walletLoading } = useQuery({
+    queryKey: ["/api/wallet", user?.id],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/wallet/${user?.id}`);
+      return res.json();
+    },
+    enabled: !!user?.id,
+  });
+
   const isArtisan = user?.role === "artisan";
-  const missions = isArtisan
-    ? user ? getArtisanMissions(user.id) : []
-    : user ? getMissionsByClient(user.id) : [];
+  const balance = walletData?.balance || 0;
+  const escrowBalance = walletData?.escrowBalance || 0;
+  const transactions = walletData?.transactions || [];
 
-  const completedMissions = missions.filter((m) => m.status === "completed" || m.status === "validated");
-  const totalRevenue = completedMissions.reduce((sum, m) => sum + (m.budget || 0), 0);
-  const pendingRevenue = missions.filter((m) => m.status === "completed" && m.payment?.status !== "released").reduce((sum, m) => sum + (m.budget || 0), 0);
-  const releasedRevenue = totalRevenue - pendingRevenue;
-  const commissionMultiplier = 0.15; // 15% commission
-  const totalFees = isArtisan ? totalRevenue * commissionMultiplier : 0;
-  const netRevenue = totalRevenue - totalFees;
-
-  const transactions = completedMissions.map((m) => ({
-    id: m.id,
-    title: m.title,
-    amount: m.budget || 0,
-    date: m.checkOutTime || m.updatedAt,
-    status: m.payment?.status === "released" ? "released" : "pending",
-    category: m.category,
-  })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  const filtered = activeTab === "all" ? transactions : transactions.filter((t) => t.status === (activeTab === "received" ? "released" : "pending"));
+  const filtered = activeTab === "all" ? transactions : transactions.filter((t: any) => t.type === (activeTab === "received" ? "credit" : "escrow"));
 
   return (
     <View style={styles.container}>
@@ -55,22 +48,22 @@ export default function WalletScreen() {
         </View>
 
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>{isArtisan ? "Revenus totaux" : "Total depense"}</Text>
-          <Text style={styles.balanceValue}>{totalRevenue}EUR</Text>
+          <Text style={styles.balanceLabel}>{isArtisan ? "Solde disponible" : "Solde portefeuille"}</Text>
+          <Text style={styles.balanceValue}>{balance.toFixed(2)}EUR</Text>
           <View style={styles.balanceRow}>
             <View style={styles.balanceStat}>
               <View style={[styles.balanceDot, { backgroundColor: Colors.success }]} />
-              <Text style={styles.balanceStatText}>{releasedRevenue}EUR {isArtisan ? "recu" : "paye"}</Text>
+              <Text style={styles.balanceStatText}>{balance.toFixed(2)}EUR libre</Text>
             </View>
             <View style={styles.balanceStat}>
               <View style={[styles.balanceDot, { backgroundColor: Colors.warning }]} />
-              <Text style={styles.balanceStatText}>{pendingRevenue}EUR en attente</Text>
+              <Text style={styles.balanceStatText}>{escrowBalance.toFixed(2)}EUR bloqué (Escrow)</Text>
             </View>
           </View>
           {isArtisan ? (
             <View style={styles.commissionBox}>
-              <Text style={styles.commissionText}>Commission (15%): -{totalFees.toFixed(2)}€</Text>
-              <Text style={styles.commissionNet}>Net: {netRevenue.toFixed(2)}€</Text>
+              <Text style={styles.commissionText}>Frais plateforme (15%) inclus</Text>
+              <Text style={styles.commissionNet}>Total: {(balance + escrowBalance).toFixed(2)}€</Text>
             </View>
           ) : (
             <Pressable style={styles.rechargeBtn} onPress={() => Alert.alert("Recharger", "Redirection vers le gateway de paiement...")}>
@@ -111,24 +104,24 @@ export default function WalletScreen() {
             renderItem={({ item }) => (
               <Pressable
                 style={({ pressed }) => [styles.transactionCard, pressed && { opacity: 0.95 }]}
-                onPress={() => router.push({ pathname: "/mission/[id]", params: { id: item.id } })}
+                onPress={() => item.missionId && router.push({ pathname: "/mission/[id]", params: { id: item.missionId } })}
               >
-                <View style={[styles.transactionIcon, { backgroundColor: item.status === "released" ? Colors.successLight : Colors.warningLight }]}>
+                <View style={[styles.transactionIcon, { backgroundColor: item.type === "credit" ? Colors.successLight : Colors.warningLight }]}>
                   <Ionicons
-                    name={item.status === "released" ? "checkmark-circle" : "time"}
+                    name={item.type === "credit" ? "checkmark-circle" : "time"}
                     size={20}
-                    color={item.status === "released" ? Colors.success : Colors.warning}
+                    color={item.type === "credit" ? Colors.success : Colors.warning}
                   />
                 </View>
                 <View style={styles.transactionInfo}>
-                  <Text style={styles.transactionTitle} numberOfLines={1}>{item.title}</Text>
-                  <Text style={styles.transactionDate}>{new Date(item.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</Text>
+                  <Text style={styles.transactionTitle} numberOfLines={1}>{item.description || "Transaction"}</Text>
+                  <Text style={styles.transactionDate}>{new Date(item.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</Text>
                 </View>
                 <View style={styles.transactionAmount}>
-                  <Text style={[styles.transactionAmountText, { color: item.status === "released" ? Colors.success : Colors.warning }]}>
-                    {isArtisan ? "+" : "-"}{item.amount}EUR
+                  <Text style={[styles.transactionAmountText, { color: item.type === "credit" ? Colors.success : Colors.warning }]}>
+                    {item.type === "credit" ? "+" : "-"}{item.amount}EUR
                   </Text>
-                  <Text style={styles.transactionStatus}>{item.status === "released" ? "Confirme" : "En attente"}</Text>
+                  <Text style={styles.transactionStatus}>{item.type === "credit" ? "Confirme" : "Escrow"}</Text>
                 </View>
               </Pressable>
             )}

@@ -27,6 +27,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -43,7 +44,7 @@ export default function RegisterScreen() {
     setIsLoading(true);
     setError("");
     try {
-      await register({ name: name.trim(), email: email.trim(), password, role, phone });
+      await register({ name: name.trim(), email: email.trim(), password, role, phone, referredBy: referralCode.trim() });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
       setError(e.message || "Erreur lors de l'inscription");
@@ -148,6 +149,14 @@ export default function RegisterScreen() {
                 </Pressable>
               </View>
             </View>
+            <InputField
+              icon="gift-outline"
+              label="Code de parrainage (Optionnel)"
+              placeholder="Ex: PROMO-123"
+              value={referralCode}
+              onChangeText={setReferralCode}
+              autoCapitalize="characters"
+            />
 
             {error ? (
               <View style={styles.errorBox}>

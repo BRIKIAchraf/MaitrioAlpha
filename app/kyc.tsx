@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/auth-context";
+import { apiRequest } from "@/lib/query-client";
 
 type DocStatus = "not_uploaded" | "uploading" | "uploaded" | "verified" | "rejected";
 
@@ -40,6 +41,8 @@ export default function KycScreen() {
     setDocuments((prev) =>
       prev.map((d) => (d.key === key ? { ...d, status: "uploading" as DocStatus } : d))
     );
+
+    // Simulating document upload to a storage service
     setTimeout(() => {
       setDocuments((prev) =>
         prev.map((d) => (d.key === key ? { ...d, status: "uploaded" as DocStatus } : d))
@@ -53,16 +56,36 @@ export default function KycScreen() {
       Alert.alert("Documents manquants", "Veuillez telecharger tous les documents requis avant de lancer la verification.");
       return;
     }
+
+    if (!user || user.role !== "artisan") return;
+
     setIsVerifying(true);
-    setTimeout(async () => {
-      setDocuments((prev) => prev.map((d) => ({ ...d, status: "verified" as DocStatus })));
-      if (updateUser) {
-        await updateUser({ kycStatus: "verified" });
+    try {
+      // Map frontend keys to backend schema fields
+      const kycData: any = {};
+      documents.forEach(doc => {
+        if (doc.key === "identity") kycData.idDocUrl = "https://storage.provider.com/id.pdf";
+        if (doc.key === "insurance") kycData.insuranceDocUrl = "https://storage.provider.com/insurance.pdf";
+        if (doc.key === "diploma") kycData.diplomaDocUrl = "https://storage.provider.com/diploma.pdf";
+        if (doc.key === "kbis") kycData.kbisDocUrl = "https://storage.provider.com/kbis.pdf";
+      });
+
+      const res = await apiRequest("POST", `/api/artisans/${user.id}/kyc`, kycData);
+      if (res.ok) {
+        setDocuments((prev) => prev.map((d) => ({ ...d, status: "verified" as DocStatus })));
+        if (updateUser) {
+          await updateUser({ kycStatus: "verified" });
+        }
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert("Verification reussie", "Votre identite a ete verifiee avec succes. Votre profil est maintenant certifie.");
+      } else {
+        throw new Error("Erreur de verification");
       }
+    } catch (e: any) {
+      Alert.alert("Erreur", "Une erreur est survenue lors de la verification. Veuillez reessayer.");
+    } finally {
       setIsVerifying(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Verification reussie", "Votre identite a ete verifiee avec succes. Votre profil est maintenant certifie.");
-    }, 3000);
+    }
   }
 
   function getStatusConfig(status: DocStatus) {

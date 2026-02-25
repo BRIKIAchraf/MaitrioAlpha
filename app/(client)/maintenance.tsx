@@ -72,7 +72,7 @@ export default function MaintenanceScreen() {
 
                 <Text style={styles.sectionTitle}>Vos Équipements</Text>
 
-                {MAINTENANCE_ITEMS.map((item) => (
+                {MAINTENANCE_ITEMS.map((item: any) => (
                     <View key={item.id} style={styles.itemCard}>
                         <View style={styles.itemHeader}>
                             <View style={styles.iconBox}>

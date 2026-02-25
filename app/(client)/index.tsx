@@ -8,6 +8,7 @@ import {
   Platform,
   Dimensions,
   Alert,
+  Vibration,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,11 +18,15 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withRepeat,
+  withSequence,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/auth-context";
 import { useMissions } from "@/context/mission-context";
+import { apiRequest } from "@/utils/api";
+import { useMutation } from "@tanstack/react-query";
 
 const { width } = Dimensions.get("window");
 
@@ -54,16 +59,59 @@ export default function ClientHomeScreen() {
   const { user } = useAuth();
   const { missions, refreshMissions } = useMissions();
 
+  const sosMutation = useMutation({
+    mutationFn: async () => {
+      // Simulate GPS location
+      const location = { lat: 48.8566, lng: 2.3522 };
+      return apiRequest("/sos/broadcast", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: user?.id,
+          lat: location.lat,
+          lng: location.lng,
+          message: `URGENCE : ${user?.name} a besoin d'assistance immédiate !`
+        }),
+      });
+    },
+    onSuccess: () => {
+      Alert.alert("SOS Envoyé", "Tous les artisans à proximité ont été alertés. Restez calme, l'aide arrive.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Vibration.vibrate([0, 500, 200, 500]);
+    },
+  });
+
+  const handleSOS = () => {
+    Alert.alert(
+      "PANIC BUTTON",
+      "Voulez-vous envoyer une alerte SOS à tous les artisans à proximité ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "ENVOYER SOS", style: "destructive", onPress: () => {
+            sosPulse.value = withRepeat(withSequence(withSpring(1.2), withSpring(1)), -1, true);
+            sosMutation.mutate();
+          }
+        }
+      ]
+    );
+  };
+
+  const sosPulse = useSharedValue(1);
+  const sosAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: sosPulse.value }],
+    shadowOpacity: sosPulse.value > 1.1 ? 0.6 : 0.3,
+  }));
+
   useEffect(() => {
     if (user) {
       refreshMissions(user.id, user.role);
     }
   }, [user?.id]);
 
-  const activeMissions = missions.filter((m) =>
+  const activeMissions = missions.filter((m: any) =>
     ["pending", "accepted", "in_progress", "en_route", "arrived"].includes(m.status)
   );
-  const completedCount = missions.filter((m) => ["completed", "validated"].includes(m.status)).length;
+  const completedCount = missions.filter((m: any) => ["completed", "validated"].includes(m.status)).length;
 
   const greeting = getGreeting();
 
@@ -85,7 +133,7 @@ export default function ClientHomeScreen() {
             <Text style={styles.userName} numberOfLines={1}>{user?.name?.split(" ")[0] || "Client"}</Text>
           </View>
           <Pressable
-            style={({ pressed }) => [styles.notifBtn, pressed && { opacity: 0.7 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.notifBtn, pressed && { opacity: 0.7 }]}
             onPress={() => { }}
           >
             <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
@@ -94,19 +142,26 @@ export default function ClientHomeScreen() {
 
         <View style={styles.scoreCard}>
           <View style={styles.scoreLeft}>
-            <Text style={styles.scoreLabel}>Score Logement</Text>
+            <View style={styles.passRow}>
+              <Text style={styles.scoreLabel}>Score Logement</Text>
+              {user?.isPremium && (
+                <View style={styles.passBadge}>
+                  <Text style={styles.passBadgeText}>PASS ELITE</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.scoreValue}>{user?.housingScore ?? 72}</Text>
             <ScoreBar score={user?.housingScore ?? 72} />
           </View>
           <View style={styles.scoreRight}>
             <View style={styles.scoreStat}>
-              <Text style={styles.scoreStatValue}>{missions.length}</Text>
-              <Text style={styles.scoreStatLabel}>Missions</Text>
+              <Text style={styles.scoreStatValue}>{user?.loyaltyPoints ?? 0}</Text>
+              <Text style={styles.scoreStatLabel}>Loyalty</Text>
             </View>
             <View style={styles.scoreStatDivider} />
             <View style={styles.scoreStat}>
-              <Text style={styles.scoreStatValue}>{completedCount}</Text>
-              <Text style={styles.scoreStatLabel}>Terminées</Text>
+              <Text style={styles.scoreStatValue}>{user?.ecoPoints ?? 0}</Text>
+              <Text style={styles.scoreStatLabel}>🌍 Eco</Text>
             </View>
           </View>
         </View>
@@ -173,7 +228,7 @@ export default function ClientHomeScreen() {
           </Pressable>
         )}
         <Pressable
-          style={({ pressed }) => [styles.newMissionBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
+          style={({ pressed }: { pressed: boolean }) => [styles.newMissionBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             router.push("/mission/new");
@@ -212,7 +267,7 @@ export default function ClientHomeScreen() {
         {activeMissions.length > 0 && (
           <>
             <SectionHeader title="Missions en cours" actionLabel="Voir tout" onAction={() => router.push("/(client)/missions")} />
-            {activeMissions.slice(0, 3).map((mission) => (
+            {activeMissions.slice(0, 3).map((mission: any) => (
               <MissionCard
                 key={mission.id}
                 mission={mission}
@@ -252,6 +307,30 @@ export default function ClientHomeScreen() {
           <PledgeCard icon="card" title="Paiement sécurisé" text="Votre paiement est protégé jusqu'à validation" color={Colors.accent} />
           <PledgeCard icon="star" title="Satisfaction" text="98% de clients satisfaits de nos artisans" color={Colors.warning} />
         </View>
+
+        <Animated.View style={[styles.panicBtn, sosAnimStyle]}>
+          <Pressable
+            style={({ pressed }: { pressed: boolean }) => [pressed && { opacity: 0.9 }]}
+            onPress={handleSOS}
+            disabled={sosMutation.isLoading}
+          >
+            <LinearGradient
+              colors={["#EF4444", "#991B1B"]}
+              style={styles.panicGrad}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <View style={styles.panicIconBox}>
+                <Ionicons name="warning" size={24} color="#FFFFFF" />
+              </View>
+              <View style={styles.panicText}>
+                <Text style={styles.panicTitle}>SOS PANIC</Text>
+                <Text style={styles.panicSub}>Alerte immédiate (Proximité 5km)</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
+            </LinearGradient>
+          </Pressable>
+        </Animated.View>
       </View>
     </ScrollView>
   );
@@ -272,7 +351,7 @@ function SectionHeader({ title, actionLabel, onAction }: { title: string; action
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{title}</Text>
       {actionLabel && (
-        <Pressable onPress={onAction} style={({ pressed }) => pressed && { opacity: 0.6 }}>
+        <Pressable onPress={onAction} style={({ pressed }: { pressed: boolean }) => pressed && { opacity: 0.6 }}>
           <Text style={styles.sectionAction}>{actionLabel}</Text>
         </Pressable>
       )}
@@ -303,7 +382,7 @@ function MissionCard({ mission, onPress }: { mission: any; onPress: () => void }
   const statusConfig = getMissionStatusConfig(mission.status);
   return (
     <Pressable
-      style={({ pressed }) => [styles.missionCard, pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] }]}
+      style={({ pressed }: { pressed: boolean }) => [styles.missionCard, pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] }]}
       onPress={onPress}
     >
       <View style={styles.missionCardRow}>
@@ -409,9 +488,12 @@ const styles = StyleSheet.create({
   scoreBarFill: { height: "100%", borderRadius: 2 },
   scoreRight: { flexDirection: "row", alignItems: "center", gap: 16 },
   scoreStat: { alignItems: "center" },
-  scoreStatValue: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
-  scoreStatLabel: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.7)" },
+  scoreStatValue: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
+  scoreStatLabel: { fontSize: 10, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.7)" },
   scoreStatDivider: { width: 1, height: 30, backgroundColor: "rgba(255,255,255,0.2)" },
+  passRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  passBadge: { backgroundColor: Colors.accent, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  passBadgeText: { fontSize: 8, fontFamily: "Inter_800ExtraBold", color: Colors.primary },
   searchEntry: {
     flexDirection: "row",
     alignItems: "center",
@@ -542,4 +624,10 @@ const styles = StyleSheet.create({
   referralInfo: { flex: 1 },
   referralTitle: { color: "white", fontSize: 16, fontFamily: "Inter_700Bold" },
   referralDesc: { color: "rgba(255,255,255,0.8)", fontSize: 12, marginTop: 4 },
+  panicBtn: { marginTop: 12, marginBottom: 12, borderRadius: 20, overflow: "hidden", shadowColor: "#EF4444", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 6 },
+  panicGrad: { flexDirection: "row", alignItems: "center", padding: 16, gap: 14 },
+  panicIconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" },
+  panicText: { flex: 1 },
+  panicTitle: { fontSize: 18, fontFamily: "Inter_800ExtraBold", color: "#FFFFFF", letterSpacing: 0.5 },
+  panicSub: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "rgba(255,255,255,0.8)" },
 });

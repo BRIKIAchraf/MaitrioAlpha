@@ -16,21 +16,56 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 
-const MOCK_MESSAGES = [
-    { id: "1", sender: "Maîtrio Arbitre", text: "Bonjour, je suis votre médiateur. J'ai bien reçu les photos du robinet qui fuit toujours.", time: "10:00", isAdmin: true },
-    { id: "2", sender: "Alice M. (Client)", text: "Le raccord n'est pas serré et l'eau coule sous l'évier.", time: "10:05", isAdmin: false },
-    { id: "3", sender: "Jean P. (Artisan)", text: "J'ai pourtant testé avant de partir. Je peux repasser ce soir.", time: "10:12", isAdmin: false },
-];
+import { useAuth } from "@/context/auth-context";
+import { apiRequest } from "@/utils/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+interface Message {
+    id: string;
+    senderId: string;
+    content: string;
+    isAdmin: boolean;
+    createdAt: string;
+    senderName?: string;
+}
 
 export default function DisputeDetailScreen() {
     const { id } = useLocalSearchParams();
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
     const insets = useSafeAreaInsets();
     const [message, setMessage] = useState("");
 
+    const { data: dispute } = useQuery({
+        queryKey: [`/api/disputes/${id}`],
+    });
+
+    const { data: messages } = useQuery<Message[]>({
+        queryKey: [`/api/disputes/${id}/messages`],
+    });
+
+    const mutation = useMutation({
+        mutationFn: async (content: string) => {
+            return apiRequest(`/disputes/${id}/messages`, {
+                method: "POST",
+                body: JSON.stringify({
+                    senderId: user?.id,
+                    content,
+                    isAdmin: user?.role === "admin",
+                }),
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`/api/disputes/${id}/messages`] });
+            setMessage("");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+    });
+
     const sendMessage = () => {
-        if (!message) return;
+        if (!message.trim()) return;
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setMessage("");
+        mutation.mutate(message);
     };
 
     return (
@@ -60,11 +95,11 @@ export default function DisputeDetailScreen() {
                     <Text style={styles.infoText}>Conversation tripartie sécurisée. Maîtrio garantit l'impartialité.</Text>
                 </View>
 
-                {MOCK_MESSAGES.map((msg) => (
-                    <View key={msg.id} style={[styles.messageBubble, msg.isAdmin && styles.adminBubble]}>
-                        <Text style={[styles.senderName, msg.isAdmin && styles.adminSender]}>{msg.sender}</Text>
-                        <Text style={[styles.messageText, msg.isAdmin && styles.adminText]}>{msg.text}</Text>
-                        <Text style={styles.messageTime}>{msg.time}</Text>
+                {messages?.map((msg) => (
+                    <View key={msg.id} style={[styles.messageBubble, msg.isAdmin && styles.adminBubble, msg.senderId === user?.id && styles.userBubble]}>
+                        <Text style={[styles.senderName, msg.isAdmin && styles.adminSender]}>{msg.isAdmin ? "Arbitre Maîtrio" : (msg.senderId === user?.id ? "Vous" : "Intervenant")}</Text>
+                        <Text style={[styles.messageText, msg.isAdmin && styles.adminText, msg.senderId === user?.id && styles.userText]}>{msg.content}</Text>
+                        <Text style={styles.messageTime}>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
                     </View>
                 ))}
             </ScrollView>
@@ -108,10 +143,12 @@ const styles = StyleSheet.create({
     infoText: { flex: 1, fontSize: 11, color: "#991B1B", fontFamily: "Inter_500Medium" },
     messageBubble: { backgroundColor: "white", padding: 15, borderRadius: 18, marginBottom: 15, maxWidth: "85%", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1 },
     adminBubble: { backgroundColor: "#1E293B", alignSelf: "center", maxWidth: "95%" },
+    userBubble: { backgroundColor: Colors.primary, alignSelf: "flex-end" },
     senderName: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.textSecondary, marginBottom: 4 },
     adminSender: { color: Colors.accent },
     messageText: { fontSize: 14, color: Colors.text, lineHeight: 20 },
     adminText: { color: "white" },
+    userText: { color: "white" },
     messageTime: { fontSize: 10, color: Colors.textMuted, marginTop: 4, textAlign: "right" },
     inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "white", padding: 15, borderTopWidth: 1, borderTopColor: "#F1F5F9" },
     attachBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#F1F5F9", alignItems: "center", justifyContent: "center" },

@@ -11,7 +11,7 @@
     "server:build": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=server_dist",
     "server:prod": "NODE_ENV=production node server_dist/index.js",
     "db:push": "drizzle-kit push",
-    "dev": "NODE_ENV=development EXPO_WEB_PORT=8081 tsx server/index.ts & CI=1 npx expo start --web --port 8081 --host localhost",
+    "dev": "NODE_ENV=development EXPO_WEB_PORT=8081 tsx server/index.ts & CI=1 npx expo start --web --port 8081 --host localhost --clear",
     "start": "npx expo start",
     "lint": "npx expo lint",
     "lint:fix": "npx expo lint --fix"
@@ -72,7 +72,7 @@
     "@babel/core": "^7.25.2",
     "@expo/ngrok": "^4.1.0",
     "@types/express": "^5.0.0",
-    "@types/react": "~18.3.12",
+    "@types/react": "19.0.0",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.31.0",
     "eslint-config-expo": "~10.0.0",

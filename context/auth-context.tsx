@@ -16,10 +16,14 @@ export interface User {
   phone?: string;
   avatar?: string;
   avatarUrl?: string;
+  isPremium?: boolean;
+  loyaltyPoints?: number;
+  ecoPoints?: number;
   trustScore?: number;
   housingScore?: number;
   kycStatus?: "pending" | "verified" | "rejected";
   revenue?: number;
+  referralCount?: number;
   createdAt: string;
   artisanProfile?: any;
   wallet?: any;

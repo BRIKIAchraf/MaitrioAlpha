@@ -54,18 +54,18 @@ export default function DisputeCenterScreen() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.summaryBox}>
                     <View style={styles.summaryItem}>
-                        <Text style={styles.summaryValue}>{disputes.filter(d => d.status !== "resolved").length}</Text>
+                        <Text style={styles.summaryValue}>{disputes.filter((d: any) => d.status !== "resolved").length}</Text>
                         <Text style={styles.summaryLabel}>En cours</Text>
                     </View>
                     <View style={styles.summaryDivider} />
                     <View style={styles.summaryItem}>
-                        <Text style={styles.summaryValue}>{disputes.filter(d => d.status === "resolved").length}</Text>
+                        <Text style={styles.summaryValue}>{disputes.filter((d: any) => d.status === "resolved").length}</Text>
                         <Text style={styles.summaryLabel}>Résolus</Text>
                     </View>
                 </View>
 
                 <Text style={styles.sectionTitle}>Mes Dossiers</Text>
-                {disputes.map((dispute) => (
+                {disputes.map((dispute: any) => (
                     <Pressable key={dispute.id} style={styles.disputeCard} onPress={() => Alert.alert("Détails", "Détails du litige bientôt disponibles.")}>
                         <View style={styles.cardHeader}>
                             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(dispute.status) + "20" }]}>

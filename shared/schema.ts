@@ -24,20 +24,30 @@ export const users = pgTable("users", {
   lastName: text("last_name"),
   role: text("role").default("client"),
   avatarUrl: text("avatar_url"),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  twoFactorSecret: text("two_factor_secret"),
+  referralCode: text("referral_code"),
+  referredBy: varchar("referred_by"),
+  referralCount: integer("referral_count").default(0),
+  loyaltyPoints: integer("loyalty_points").default(0),
+  ecoPoints: integer("eco_points").default(0),
+  isPremium: boolean("is_premium").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const usersRelations = relations(users, ({ one, many }) => ({
-  artisanProfile: one(artisanProfiles, {
-    fields: [users.id],
-    references: [artisanProfiles.userId],
-  }),
-  wallet: one(wallets, {
-    fields: [users.id],
-    references: [wallets.userId],
-  }),
-  notifications: many(notifications),
-}));
+export const userAddresses = pgTable("user_addresses", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  label: text("label").notNull(), // Home, Work, Parents
+  address: text("address").notNull(),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
+  isDefault: boolean("is_default").default(false),
+});
 
 export const artisanProfiles = pgTable(
   "artisan_profiles",
@@ -53,6 +63,10 @@ export const artisanProfiles = pgTable(
     website: text("website"),
     googlePlaceId: text("google_place_id"),
     certifications: text("certifications").default("[]"),
+    insuranceDocUrl: text("insurance_doc_url"),
+    idDocUrl: text("id_doc_url"),
+    kbisDocUrl: text("kbis_doc_url"),
+    diplomaDocUrl: text("diploma_doc_url"),
     zone: text("zone"),
     latitude: real("latitude"),
     longitude: real("longitude"),
@@ -60,6 +74,7 @@ export const artisanProfiles = pgTable(
     completedMissions: integer("completed_missions").default(0),
     kycStatus: text("kyc_status").default("pending"),
     availability: boolean("availability").default(true),
+    isPremium: boolean("is_premium").default(false),
   },
   (table) => [
     index("artisan_profiles_user_id_idx").on(table.userId),
@@ -98,8 +113,15 @@ export const missions = pgTable(
     scheduledDate: timestamp("scheduled_date"),
     estimatedPrice: real("estimated_price"),
     finalPrice: real("final_price"),
+    escrowAmount: real("escrow_amount").default(0),
     urgency: text("urgency").default("normal"),
+    isSos: boolean("is_sos").default(false),
     photos: text("photos").default("[]"),
+    videoUrl: text("video_url"),
+    iaDiagnostic: text("ia_diagnostic"),
+    checkInTime: timestamp("check_in_time"),
+    checkOutTime: timestamp("check_out_time"),
+    geofenceArrived: boolean("geofence_arrived").default(false),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
@@ -110,28 +132,22 @@ export const missions = pgTable(
   ]
 );
 
-export const missionsRelations = relations(missions, ({ one, many }) => ({
-  client: one(users, {
-    fields: [missions.clientId],
-    references: [users.id],
-    relationName: "clientMissions",
-  }),
-  artisan: one(users, {
-    fields: [missions.artisanId],
-    references: [users.id],
-    relationName: "artisanMissions",
-  }),
-  quotes: many(missionQuotes),
-  reviews: many(reviews),
-  signature: one(signatures, {
-    fields: [missions.id],
-    references: [signatures.missionId],
-  }),
-  invoice: one(invoices, {
-    fields: [missions.id],
-    references: [invoices.missionId],
-  }),
-}));
+export const chats = pgTable("chats", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  missionId: varchar("mission_id")
+    .notNull()
+    .references(() => missions.id),
+  senderId: varchar("sender_id")
+    .notNull()
+    .references(() => users.id),
+  content: text("content"),
+  mediaUrl: text("media_url"),
+  mediaType: text("media_type"), // 'image' | 'audio' | 'video'
+  isVoiceNote: boolean("is_voice_note").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const missionQuotes = pgTable(
   "mission_quotes",
@@ -145,8 +161,11 @@ export const missionQuotes = pgTable(
     artisanId: varchar("artisan_id")
       .notNull()
       .references(() => users.id),
-    amount: real("amount").notNull(),
+    amountLabor: real("amount_labor").notNull().default(0),
+    amountParts: real("amount_parts").notNull().default(0),
+    amountTotal: real("amount_total").notNull().default(0),
     description: text("description"),
+    partsList: text("parts_list").default("[]"), // JSON list of parts
     estimatedDuration: text("estimated_duration"),
     status: text("status").default("pending"),
     createdAt: timestamp("created_at").defaultNow(),
@@ -156,16 +175,86 @@ export const missionQuotes = pgTable(
   ]
 );
 
-export const missionQuotesRelations = relations(missionQuotes, ({ one }) => ({
-  mission: one(missions, {
-    fields: [missionQuotes.missionId],
-    references: [missions.id],
-  }),
-  artisan: one(users, {
-    fields: [missionQuotes.artisanId],
-    references: [users.id],
-  }),
-}));
+export const equipmentRegistry = pgTable("equipment_registry", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  name: text("name").notNull(), // Climatiseur, Chaudière
+  brand: text("brand"),
+  model: text("model"),
+  installDate: timestamp("install_date"),
+  lastMaintenanceDate: timestamp("last_maintenance_date"),
+  nextMaintenanceDate: timestamp("next_maintenance_date"),
+  healthScore: integer("health_score").default(100),
+  healthHistory: text("health_history").default("[]"),
+});
+
+export const inventory = pgTable("inventory", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  artisanId: varchar("artisan_id")
+    .notNull()
+    .references(() => users.id),
+  name: text("name").notNull(),
+  quantity: integer("quantity").default(0),
+  minQuantity: integer("min_quantity").default(5),
+  price: real("price"),
+  description: text("description"),
+  imageUrl: text("image_url"),
+  type: text("type").default("stock"), // 'stock' | 'used'
+  condition: text("condition").default("Neuf"),
+});
+
+export const disputes = pgTable("disputes", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  missionId: varchar("mission_id")
+    .notNull()
+    .references(() => missions.id),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
+  reason: text("reason").notNull(),
+  evidenceUrls: text("evidence_urls").default("[]"),
+  status: text("status").default("open"), // 'open', 'in_mediation', 'resolved', 'refunded'
+  mediationNotes: text("mediation_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const disputeMessages = pgTable("dispute_messages", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  disputeId: varchar("dispute_id")
+    .notNull()
+    .references(() => disputes.id),
+  senderId: varchar("sender_id")
+    .notNull()
+    .references(() => users.id),
+  content: text("content").notNull(),
+  isAdmin: boolean("is_admin").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const ecoImpact = pgTable("eco_impact", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  missionId: varchar("mission_id")
+    .notNull()
+    .references(() => missions.id),
+  artisanId: varchar("artisan_id")
+    .notNull()
+    .references(() => users.id),
+  recyclingDeclared: boolean("recycling_declared").default(false),
+  ecoPointsEarned: integer("eco_points_earned").default(0),
+});
+
 
 export const reviews = pgTable(
   "reviews",
@@ -184,6 +273,7 @@ export const reviews = pgTable(
       .references(() => users.id),
     rating: integer("rating").notNull(),
     comment: text("comment"),
+    tags: text("tags").default("[]"), // ['Vérifié', 'Rapide', 'Propreté']
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => [
@@ -191,23 +281,6 @@ export const reviews = pgTable(
     index("reviews_mission_id_idx").on(table.missionId),
   ]
 );
-
-export const reviewsRelations = relations(reviews, ({ one }) => ({
-  mission: one(missions, {
-    fields: [reviews.missionId],
-    references: [missions.id],
-  }),
-  fromUser: one(users, {
-    fields: [reviews.fromUserId],
-    references: [users.id],
-    relationName: "reviewsGiven",
-  }),
-  toUser: one(users, {
-    fields: [reviews.toUserId],
-    references: [users.id],
-    relationName: "reviewsReceived",
-  }),
-}));
 
 export const wallets = pgTable(
   "wallets",
@@ -220,18 +293,11 @@ export const wallets = pgTable(
       .references(() => users.id)
       .unique(),
     balance: real("balance").default(0),
+    escrowBalance: real("escrow_balance").default(0),
     currency: text("currency").default("EUR"),
   },
   (table) => [index("wallets_user_id_idx").on(table.userId)]
 );
-
-export const walletsRelations = relations(wallets, ({ one, many }) => ({
-  user: one(users, {
-    fields: [wallets.userId],
-    references: [users.id],
-  }),
-  transactions: many(walletTransactions),
-}));
 
 export const walletTransactions = pgTable(
   "wallet_transactions",
@@ -253,20 +319,6 @@ export const walletTransactions = pgTable(
   ]
 );
 
-export const walletTransactionsRelations = relations(
-  walletTransactions,
-  ({ one }) => ({
-    wallet: one(wallets, {
-      fields: [walletTransactions.walletId],
-      references: [wallets.id],
-    }),
-    mission: one(missions, {
-      fields: [walletTransactions.missionId],
-      references: [missions.id],
-    }),
-  })
-);
-
 export const signatures = pgTable(
   "signatures",
   {
@@ -282,13 +334,6 @@ export const signatures = pgTable(
   },
   (table) => [index("signatures_mission_id_idx").on(table.missionId)]
 );
-
-export const signaturesRelations = relations(signatures, ({ one }) => ({
-  mission: one(missions, {
-    fields: [signatures.missionId],
-    references: [missions.id],
-  }),
-}));
 
 export const invoices = pgTable(
   "invoices",
@@ -308,13 +353,6 @@ export const invoices = pgTable(
   (table) => [index("invoices_mission_id_idx").on(table.missionId)]
 );
 
-export const invoicesRelations = relations(invoices, ({ one }) => ({
-  mission: one(missions, {
-    fields: [invoices.missionId],
-    references: [missions.id],
-  }),
-}));
-
 export const artisanPortfolioItems = pgTable(
   "artisan_portfolio_items",
   {
@@ -333,16 +371,6 @@ export const artisanPortfolioItems = pgTable(
   (table) => [
     index("portfolio_items_artisan_id_idx").on(table.artisanId),
   ]
-);
-
-export const artisanPortfolioItemsRelations = relations(
-  artisanPortfolioItems,
-  ({ one }) => ({
-    artisan: one(artisanProfiles, {
-      fields: [artisanPortfolioItems.artisanId],
-      references: [artisanProfiles.id],
-    }),
-  })
 );
 
 export const notifications = pgTable(
@@ -366,14 +394,79 @@ export const notifications = pgTable(
   ]
 );
 
-export const notificationsRelations = relations(notifications, ({ one }) => ({
-  user: one(users, {
-    fields: [notifications.userId],
+export const usersRelations = relations(users, ({ one, many }) => ({
+  artisanProfile: one(artisanProfiles, {
+    fields: [users.id],
+    references: [artisanProfiles.userId],
+  }),
+  userAddresses: many(userAddresses),
+  wallet: one(wallets, {
+    fields: [users.id],
+    references: [wallets.userId],
+  }),
+  notifications: many(notifications),
+  givenReviews: many(reviews, { relationName: "reviewsGiven" }),
+  receivedReviews: many(reviews, { relationName: "reviewsReceived" }),
+  missionsAsClient: many(missions, { relationName: "clientMissions" }),
+  missionsAsArtisan: many(missions, { relationName: "artisanMissions" }),
+  equipment: many(equipmentRegistry),
+}));
+
+export const missionsRelations = relations(missions, ({ one, many }) => ({
+  client: one(users, {
+    fields: [missions.clientId],
+    references: [users.id],
+    relationName: "clientMissions",
+  }),
+  artisan: one(users, {
+    fields: [missions.artisanId],
+    references: [users.id],
+    relationName: "artisanMissions",
+  }),
+  quotes: many(missionQuotes),
+  reviews: many(reviews),
+  signature: one(signatures, {
+    fields: [missions.id],
+    references: [signatures.missionId],
+  }),
+  invoice: one(invoices, {
+    fields: [missions.id],
+    references: [invoices.missionId],
+  }),
+  chats: many(chats),
+  disputes: many(disputes),
+  disputeMessages: many(disputeMessages),
+  ecoImpact: one(ecoImpact, {
+    fields: [missions.id],
+    references: [ecoImpact.missionId],
+  }),
+}));
+
+export const missionQuotesRelations = relations(missionQuotes, ({ one }) => ({
+  mission: one(missions, {
+    fields: [missionQuotes.missionId],
+    references: [missions.id],
+  }),
+  artisan: one(users, {
+    fields: [missionQuotes.artisanId],
     references: [users.id],
   }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
   mission: one(missions, {
-    fields: [notifications.missionId],
+    fields: [reviews.missionId],
     references: [missions.id],
+  }),
+  fromUser: one(users, {
+    fields: [reviews.fromUserId],
+    references: [users.id],
+    relationName: "reviewsGiven",
+  }),
+  toUser: one(users, {
+    fields: [reviews.toUserId],
+    references: [users.id],
+    relationName: "reviewsReceived",
   }),
 }));
 
@@ -437,6 +530,13 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+export const insertUserAddressSchema = createInsertSchema(userAddresses).omit({ id: true });
+export const insertEquipmentSchema = createInsertSchema(equipmentRegistry).omit({ id: true });
+export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true });
+export const insertDisputeSchema = createInsertSchema(disputes).omit({ id: true, createdAt: true });
+export const insertDisputeMessageSchema = createInsertSchema(disputeMessages).omit({ id: true, createdAt: true });
+export const insertEcoImpactSchema = createInsertSchema(ecoImpact).omit({ id: true });
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type ArtisanProfile = typeof artisanProfiles.$inferSelect;
@@ -459,3 +559,15 @@ export type ArtisanPortfolioItem = typeof artisanPortfolioItems.$inferSelect;
 export type InsertPortfolioItem = z.infer<typeof insertPortfolioItemSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type UserAddress = typeof userAddresses.$inferSelect;
+export type InsertUserAddress = z.infer<typeof insertUserAddressSchema>;
+export type Equipment = typeof equipmentRegistry.$inferSelect;
+export type InsertEquipment = z.infer<typeof insertEquipmentSchema>;
+export type InventoryItem = typeof inventory.$inferSelect;
+export type InsertInventory = z.infer<typeof insertInventorySchema>;
+export type Dispute = typeof disputes.$inferSelect;
+export type InsertDispute = z.infer<typeof insertDisputeSchema>;
+export type DisputeMessage = typeof disputeMessages.$inferSelect;
+export type InsertDisputeMessage = z.infer<typeof insertDisputeMessageSchema>;
+export type EcoImpact = typeof ecoImpact.$inferSelect;
+export type InsertEcoImpact = z.infer<typeof insertEcoImpactSchema>;

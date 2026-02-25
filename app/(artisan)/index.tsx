@@ -45,17 +45,19 @@ export default function ArtisanDashboardScreen() {
 
   const available = getAvailableMissions();
   const myMissions = user ? getArtisanMissions(user.id) : [];
-  const activeMission = myMissions.find((m) => m.status === "in_progress");
-  const completedMissions = myMissions.filter((m) => m.status === "completed" || m.status === "validated");
+  const activeMission = myMissions.find((m: any) => m.status === "in_progress");
+  const completedMissions = myMissions.filter((m: any) => m.status === "completed" || m.status === "validated");
   const completedCount = completedMissions.length;
-  const disputeCount = myMissions.filter((m) => m.status === "disputed").length;
-  const ratingSum = completedMissions.reduce((sum, m) => sum + (m.rating?.overall || 0), 0);
+  const disputeCount = myMissions.filter((m: any) => m.status === "disputed").length;
+  const ratingSum = completedMissions.reduce((sum: number, m: any) => sum + (m.rating?.overall || 0), 0);
   const avgRating = completedCount > 0 ? ratingSum / completedCount : 0;
 
-  // Trust Score calculation (Mock logic)
+  // Trust Score calculation
   const trustScore = Math.min(5, 4 + (completedCount * 0.1) - (disputeCount * 0.5));
   const badge = trustScore >= 4.5 ? "Elite" : trustScore >= 4.0 ? "Pro" : "Vérifié";
-  const revenue = user?.revenue ?? completedCount * 150;
+
+  // Real revenue sum from completed mission prices
+  const revenue = completedMissions.reduce((sum: number, m: any) => sum + (m.finalPrice || m.estimatedPrice || m.budget || 0), 0);
 
   return (
     <ScrollView
@@ -132,7 +134,7 @@ export default function ArtisanDashboardScreen() {
       <View style={styles.body}>
         {activeMission && (
           <Pressable
-            style={({ pressed }) => [styles.activeMissionBanner, pressed && { opacity: 0.95 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.activeMissionBanner, pressed && { opacity: 0.95 }]}
             onPress={() => router.push({ pathname: "/mission/[id]", params: { id: activeMission.id } })}
           >
             <LinearGradient
@@ -169,7 +171,7 @@ export default function ArtisanDashboardScreen() {
             <Text style={styles.trustScoreValue}>{trustScore}</Text>
           </View>
           <View style={styles.starsRow}>
-            {[1, 2, 3, 4, 5].map((s) => (
+            {[1, 2, 3, 4, 5].map((s: number) => (
               <Ionicons
                 key={s}
                 name={s <= Math.floor(trustScore) ? "star" : s - 0.5 <= trustScore ? "star-half" : "star-outline"}
@@ -238,13 +240,16 @@ export default function ArtisanDashboardScreen() {
             <Text style={styles.emptyText}>Aucune mission disponible</Text>
           </View>
         ) : (
-          available.slice(0, 3).map((mission) => (
-            <AvailableMissionCard
-              key={mission.id}
-              mission={mission}
-              onPress={() => router.push({ pathname: "/mission/[id]", params: { id: mission.id } })}
-            />
-          ))
+          [...available]
+            .sort((a, b) => (b.isSos ? 1 : 0) - (a.isSos ? 1 : 0)) // Sort SOS first
+            .slice(0, 5)
+            .map((mission: any) => (
+              <AvailableMissionCard
+                key={mission.id}
+                mission={mission}
+                onPress={() => router.push({ pathname: "/mission/[id]", params: { id: mission.id } })}
+              />
+            ))
         )}
       </View>
     </ScrollView>
@@ -254,7 +259,7 @@ export default function ArtisanDashboardScreen() {
 function ProCard({ title, icon, color, onPress }: { title: string; icon: any; color: string; onPress: () => void }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.proCard, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
+      style={({ pressed }: { pressed: boolean }) => [styles.proCard, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
       onPress={onPress}
     >
       <View style={[styles.proIconBox, { backgroundColor: color + "15" }]}>
@@ -280,7 +285,7 @@ function StatCard({ value, label, icon, gold }: { value: string; label: string; 
 function AvailableMissionCard({ mission, onPress }: { mission: any; onPress: () => void }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.missionCard, pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] }]}
+      style={({ pressed }: { pressed: boolean }) => [styles.missionCard, pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] }]}
       onPress={onPress}
     >
       <View style={styles.missionCardHeader}>
@@ -288,12 +293,20 @@ function AvailableMissionCard({ mission, onPress }: { mission: any; onPress: () 
           <Ionicons name={(CATEGORY_ICONS[mission.category] || "build") as any} size={20} color={Colors.accent} />
         </View>
         <View style={styles.missionCardInfo}>
-          <Text style={styles.missionCardTitle}>{mission.title}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.missionCardTitle}>{mission.title}</Text>
+            {mission.isSos && (
+              <View style={styles.sosBadge}>
+                <Ionicons name="flash" size={10} color="#fff" />
+                <Text style={styles.sosBadgeText}>SOS</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.missionCardClient}>{mission.clientName}</Text>
         </View>
-        {mission.budget && (
-          <View style={styles.budgetBadge}>
-            <Text style={styles.budgetText}>{mission.budget}€</Text>
+        {(mission.budget || mission.isSos) && (
+          <View style={[styles.budgetBadge, mission.isSos && { backgroundColor: Colors.danger + "20" }]}>
+            <Text style={[styles.budgetText, mission.isSos && { color: Colors.danger }]}>{mission.isSos ? 50 : mission.budget}€</Text>
           </View>
         )}
       </View>
@@ -484,6 +497,8 @@ const styles = StyleSheet.create({
   acceptBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.primary },
   statPressable: { flex: 1 },
   kycWarningBanner: { flexDirection: "row", alignItems: "center", backgroundColor: Colors.warning + "10", padding: 16, borderRadius: 20, borderWidth: 1, borderColor: Colors.warning + "30", marginBottom: 12 },
-  kycWarningTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.warning },
   kycWarningText: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  sosBadge: { flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: Colors.danger, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  sosBadgeText: { fontSize: 9, fontFamily: "Inter_800ExtraBold", color: "#fff" },
 });

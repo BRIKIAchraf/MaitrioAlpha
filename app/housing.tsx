@@ -7,6 +7,8 @@ import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/auth-context";
 import { useMissions } from "@/context/mission-context";
+import { apiRequest } from "@/lib/query-client";
+import { useQuery } from "@tanstack/react-query";
 
 const { width } = Dimensions.get("window");
 
@@ -23,6 +25,15 @@ export default function HousingDossierScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { getMissionsByClient } = useMissions();
+
+  const { data: equipment, isLoading: eqpLoading } = useQuery({
+    queryKey: ["/api/users", user?.id, "equipment"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/users/${user?.id}/equipment`);
+      return res.json();
+    },
+    enabled: !!user?.id,
+  });
 
   const missions = user ? getMissionsByClient(user.id) : [];
   const completedMissions = missions.filter((m) => m.status === "completed" || m.status === "validated");
@@ -98,23 +109,37 @@ export default function HousingDossierScreen() {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Detail par categorie</Text>
-        {SCORE_CATEGORIES.map((cat) => (
-          <View key={cat.key} style={styles.categoryCard}>
-            <View style={styles.categoryHeader}>
-              <View style={[styles.categoryIcon, { backgroundColor: cat.color + "18" }]}>
-                <Ionicons name={cat.icon as any} size={20} color={cat.color} />
-              </View>
-              <View style={styles.categoryInfo}>
-                <Text style={styles.categoryName}>{cat.label}</Text>
-                <View style={styles.categoryBar}>
-                  <View style={[styles.categoryBarFill, { width: `${cat.score}%` as any, backgroundColor: cat.color }]} />
+        <Text style={styles.sectionTitle}>Registre Équipements</Text>
+        {equipment && equipment.length > 0 ? (
+          equipment.map((eq: any) => (
+            <View key={eq.id} style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <View style={[styles.categoryIcon, { backgroundColor: Colors.info + "18" }]}>
+                  <Ionicons name="construct" size={20} color={Colors.info} />
+                </View>
+                <View style={styles.categoryInfo}>
+                  <Text style={styles.categoryName}>{eq.name} ({eq.brand})</Text>
+                  <Text style={styles.categoryDesc}>Installé le {new Date(eq.installationDate).toLocaleDateString()}</Text>
+                  <View style={styles.categoryBar}>
+                    <View style={[styles.categoryBarFill, { width: `${Math.min(100, (eq.maintenanceInterval / 365) * 100)}%` as any, backgroundColor: Colors.info }]} />
+                  </View>
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={[styles.categoryScore, { color: Colors.info }]}>{eq.healthScore || 100}</Text>
+                  <Text style={{ fontSize: 9, color: Colors.textMuted }}>SANTÉ</Text>
                 </View>
               </View>
-              <Text style={[styles.categoryScore, { color: cat.color }]}>{cat.score}</Text>
             </View>
+          ))
+        ) : (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>Aucun équipement enregistré</Text>
+            <Pressable style={styles.addEqpBtn} onPress={() => Alert.alert("Nouveau", "Formulaire d'ajout d'équipement")}>
+              <Ionicons name="add-circle" size={20} color={Colors.primary} />
+              <Text style={styles.addEqpText}>Enregistrer un appareil</Text>
+            </Pressable>
           </View>
-        ))}
+        )}
 
         <Text style={styles.sectionTitle}>Documents & Factures PDF</Text>
         <View style={styles.docsList}>
@@ -223,4 +248,9 @@ const styles = StyleSheet.create({
   reportBtn: { borderRadius: 16, overflow: "hidden", marginTop: 8 },
   reportBtnGrad: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 16, borderRadius: 16 },
   reportBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
+  categoryDesc: { fontSize: 11, color: Colors.textSecondary },
+  emptyCard: { backgroundColor: Colors.surface, borderRadius: 16, padding: 24, alignItems: "center", gap: 12, borderStyle: "dashed", borderWidth: 2, borderColor: Colors.border },
+  emptyText: { fontSize: 13, color: Colors.textMuted, fontFamily: "Inter_500Medium" },
+  addEqpBtn: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: Colors.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
+  addEqpText: { fontSize: 13, fontFamily: "Inter_700Bold", color: Colors.primary },
 });

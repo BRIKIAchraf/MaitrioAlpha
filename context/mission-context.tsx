@@ -78,6 +78,7 @@ export interface Mission {
   rating?: RatingCriteria;
   latitude?: number;
   longitude?: number;
+  isSos?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -111,6 +112,7 @@ export interface CreateMissionData {
   photos?: string[];
   budget?: number;
   urgency?: UrgencyLevel;
+  isSos?: boolean;
 }
 
 const MissionContext = createContext<MissionContextValue | null>(null);

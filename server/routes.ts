@@ -19,6 +19,13 @@ function broadcastToUser(userId: string, event: string, data: unknown) {
   }
 }
 
+async function broadcastToArea(lat: number, lng: number, radius: number, event: string, data: unknown) {
+  const artisans = await storage.findArtisansInRadius(lat, lng, radius);
+  artisans.forEach(artisan => {
+    broadcastToUser(artisan.userId, event, data);
+  });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   await seedDatabase();
 
@@ -71,6 +78,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const wallet = await storage.getWallet(user.id);
       res.json({ ...safeUser, artisanProfile: profile, wallet });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  // 2FA Endpoints
+  app.post("/api/auth/2fa/setup", async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.body;
+      const secret = "MVKW6Z3SMRXWO3RA"; // Placeholder for TOTP secret generation
+      await storage.updateUser(userId, { twoFactorSecret: secret });
+      res.json({ secret, qrCodeUrl: `otpauth://totp/Maitrio:${userId}?secret=${secret}&issuer=Maitrio` });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/auth/2fa/verify", async (req: Request, res: Response) => {
+    try {
+      const { userId, code } = req.body;
+      const user = await storage.getUser(userId);
+      if (user && code === "123456") { // Placeholder verification
+        await storage.updateUser(userId, { twoFactorEnabled: true });
+        res.json({ success: true });
+      } else {
+        res.status(400).json({ message: "Invalid code" });
+      }
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  // User Addresses
+  app.get("/api/users/:id/addresses", async (req: Request, res: Response) => {
+    try {
+      const addresses = await storage.getUserAddresses(req.params.id);
+      res.json(addresses);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/users/:id/addresses", async (req: Request, res: Response) => {
+    try {
+      const address = await storage.createUserAddress({
+        userId: req.params.id,
+        ...req.body,
+      });
+      res.json(address);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.get("/api/artisans/radius", async (req: Request, res: Response) => {
+    try {
+      const { lat, lng, radius, specialty } = req.query;
+      if (!lat || !lng) return res.status(400).json({ message: "Lat/Lng required" });
+      const artisans = await storage.findArtisansInRadius(
+        parseFloat(lat as string),
+        parseFloat(lng as string),
+        parseFloat(radius as string || "20"),
+        specialty as string
+      );
+      res.json(artisans);
     } catch (e: any) {
       res.status(500).json({ message: e.message });
     }
@@ -137,6 +209,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/artisans/:id/kyc", async (req: Request, res: Response) => {
+    try {
+      const updated = await storage.updateArtisanProfile(req.params.id, {
+        kycStatus: "submitted",
+        ...req.body,
+      });
+      res.json(updated);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
   app.get("/api/missions", async (req: Request, res: Response) => {
     try {
       const { clientId, artisanId, status } = req.query;
@@ -172,22 +256,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/missions", async (req: Request, res: Response) => {
     try {
-      const mission = await storage.createMission(req.body);
+      const { isSos, ...missionData } = req.body;
+      const mission = await storage.createMission({
+        ...missionData,
+        isSos: isSos || false,
+        urgency: isSos ? "high" : (missionData.urgency || "normal"),
+        status: "pending",
+      });
 
       if (mission.clientId) {
         const wallet = await storage.getWallet(mission.clientId);
-        if (wallet && mission.estimatedPrice) {
-          await storage.updateWalletBalance(mission.clientId, -mission.estimatedPrice);
+        const escrowAmount = mission.escrowAmount || 0;
+        if (wallet && escrowAmount > 0) {
+          await storage.updateWalletBalance(mission.clientId, -escrowAmount);
+          await storage.updateEscrowBalance(mission.clientId, escrowAmount);
           await storage.createWalletTransaction({
             walletId: wallet.id,
-            amount: mission.estimatedPrice,
+            amount: escrowAmount,
             type: "escrow",
             missionId: mission.id,
-            description: `Escrow pour: ${mission.title}`,
+            description: `Escrow bloqué pour: ${mission.title}`,
           });
         }
       }
 
+      if (isSos) {
+        // Broadcast SOS to all nearby artisans (default 20km)
+        const nearbyArtisans = await storage.findArtisansInRadius(
+          mission.latitude || 48.8566,
+          mission.longitude || 2.3522,
+          20
+        );
+
+        nearbyArtisans.forEach(artisan => {
+          broadcastToUser(artisan.userId, "mission:sos", {
+            ...mission,
+            distance: artisan.distance
+          });
+          storage.createNotification({
+            userId: artisan.userId,
+            title: "🚨 SOS URGENT",
+            message: `Une urgence ${mission.category} a été signalée à ${artisan.distance?.toFixed(1)}km.`,
+            type: "sos_alert",
+            missionId: mission.id,
+            read: false,
+          });
+        });
+      }
+
+      broadcastToUser(mission.clientId, "mission:created", mission);
       res.json(mission);
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -304,6 +421,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           read: false,
         });
 
+        // Loyalty & Eco points
+        await storage.updateUserPoints(updated.clientId, 'loyalty', 10);
+        await storage.updateUserPoints(updated.artisanId, 'loyalty', 5);
+
         broadcastToUser(updated.artisanId, "mission:completed", updated);
       }
 
@@ -409,6 +530,193 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Equipment & Maintenance
+  app.get("/api/users/:id/equipment", async (req: Request, res: Response) => {
+    try {
+      const eqp = await storage.getEquipment(req.params.id);
+      res.json(eqp);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/users/:id/equipment", async (req: Request, res: Response) => {
+    try {
+      const eqp = await storage.createEquipment({
+        userId: req.params.id,
+        ...req.body,
+      });
+      res.json(eqp);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/artisans/:id/inventory", async (req: Request, res: Response) => {
+    try {
+      const item = await storage.createInventoryItem({
+        artisanId: req.params.id,
+        ...req.body,
+      });
+      res.json(item);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.put("/api/inventory/:id", async (req: Request, res: Response) => {
+    try {
+      const updated = await storage.updateInventoryQuantity(req.params.id, req.body.change || 0);
+      res.json(updated);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/inventory/:id/purchase", async (req: Request, res: Response) => {
+    try {
+      const { buyerId, quantity } = req.body;
+      const success = await storage.buyInventoryItem(req.params.id, buyerId, quantity || 1);
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(400).json({ message: "Achat impossible: stock insuffisant ou solde epuise." });
+      }
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  // Eco Impact
+  app.post("/api/missions/:id/eco", async (req: Request, res: Response) => {
+    try {
+      const mission = await storage.getMission(req.params.id);
+      if (!mission) return res.status(404).json({ message: "Mission not found" });
+
+      const impact = await storage.updateUserPoints(mission.clientId, 'eco', req.body.points || 5);
+      if (mission.artisanId) {
+        await storage.updateUserPoints(mission.artisanId, 'eco', 2);
+      }
+
+      res.json({ success: true, impact });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/sos/broadcast", async (req: Request, res: Response) => {
+    try {
+      const { userId, lat, lng, message } = req.body;
+      const nearbyArtisans = await storage.findArtisansInRadius(lat, lng, 5000); // 5km
+
+      const broadcastData = {
+        userId,
+        lat,
+        lng,
+        message,
+        type: "SOS",
+        timestamp: new Date().toISOString()
+      };
+
+      for (const artisan of nearbyArtisans) {
+        broadcastToUser(artisan.id, "sos:alert", broadcastData);
+        // Also create a persistent notification
+        await storage.createNotification({
+          userId: artisan.id,
+          title: "ALERTE SOS PROXIMITÉ",
+          message: message,
+          type: "sos"
+        });
+      }
+
+      res.json({ success: true, alertedCount: nearbyArtisans.length });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  // Disputes
+  app.post("/api/missions/:id/dispute", async (req: Request, res: Response) => {
+    try {
+      const mission = await storage.getMission(req.params.id);
+      if (!mission) return res.status(404).json({ message: "Mission not found" });
+
+      const dispute = await storage.createDispute({
+        missionId: mission.id,
+        userId: req.body.userId,
+        reason: req.body.reason,
+        evidenceUrls: JSON.stringify(req.body.evidenceUrls || []),
+        status: "open",
+      });
+
+      res.json(dispute);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.get("/api/disputes/:id", async (req: Request, res: Response) => {
+    try {
+      const dispute = await storage.getDispute(req.params.id);
+      if (!dispute) return res.status(404).json({ message: "Dispute not found" });
+      res.json(dispute);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.get("/api/disputes/:id/messages", async (req: Request, res: Response) => {
+    try {
+      const messages = await storage.getDisputeMessages(req.params.id);
+      res.json(messages);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/disputes/:id/messages", async (req: Request, res: Response) => {
+    try {
+      const msg = await storage.createDisputeMessage({
+        disputeId: req.params.id,
+        ...req.body,
+      });
+      res.json(msg);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  // Premium & Referrals
+  app.post("/api/premium/subscribe", async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.body;
+      const updated = await storage.updateUser(userId, { isPremium: true });
+      const profile = await storage.getArtisanProfile(userId);
+      if (profile) {
+        await storage.updateArtisanProfile(profile.id, { isPremium: true });
+      }
+      res.json(updated);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/referral/apply", async (req: Request, res: Response) => {
+    try {
+      const { userId, code } = req.body;
+      const referrer = await storage.getUserByUsername(code); // Assuming username as referral code for simplicity
+      if (!referrer) return res.status(404).json({ message: "Code parrainage invalide." });
+
+      await storage.updateUser(userId, { referredBy: referrer.id });
+      await storage.updateUserPoints(referrer.id, 'loyalty', 50); // Reward referrer
+      await storage.updateUserPoints(userId, 'loyalty', 20); // Reward referred user
+
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
@@ -445,7 +753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             }
           }
-        } catch {}
+        } catch { }
       });
     }
 

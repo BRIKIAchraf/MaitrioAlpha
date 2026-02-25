@@ -12,13 +12,22 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 
-const MOCK_DISPUTES = [
-    { id: "1", mission: "Fuite Salle de Bain", artisan: "Jean P.", client: "Alice M.", status: "mediation", date: "22 Fév" },
-    { id: "2", mission: "Tableau Électrique", artisan: "Marc D.", client: "Bob R.", status: "resolved", date: "15 Fév" },
-];
+import { useAuth } from "@/context/auth-context";
+import { apiRequest } from "@/utils/api";
+import { useQuery } from "@tanstack/react-query";
 
 export default function DisputeCenterScreen() {
     const insets = useSafeAreaInsets();
+    const { user } = useAuth();
+
+    const { data: disputes = [], isLoading } = useQuery({
+        queryKey: ["disputes", user?.id],
+        queryFn: () => apiRequest(`/disputes?userId=${user?.id}`),
+        enabled: !!user?.id,
+    });
+
+    const activeCount = disputes.filter((d: any) => d.status !== 'resolved').length;
+    const resolvedCount = disputes.filter((d: any) => d.status === 'resolved').length;
 
     return (
         <View style={styles.container}>
@@ -35,34 +44,34 @@ export default function DisputeCenterScreen() {
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.statsRow}>
                     <View style={styles.statBox}>
-                        <Text style={styles.statVal}>1</Text>
+                        <Text style={styles.statVal}>{activeCount}</Text>
                         <Text style={styles.statLabel}>En cours</Text>
                     </View>
                     <View style={styles.statBox}>
-                        <Text style={styles.statVal}>12</Text>
+                        <Text style={styles.statVal}>{resolvedCount}</Text>
                         <Text style={styles.statLabel}>Résolus</Text>
                     </View>
                 </View>
 
                 <Text style={styles.sectionTitle}>Vos dossiers de médiation</Text>
-                {MOCK_DISPUTES.map((dispute) => (
+                {disputes.map((dispute: any) => (
                     <Pressable
                         key={dispute.id}
                         style={styles.disputeCard}
                         onPress={() => router.push(`/dispute/${dispute.id}`)}
                     >
                         <View style={styles.cardHeader}>
-                            <View style={[styles.statusBadge, { backgroundColor: dispute.status === 'mediation' ? '#FEF2F2' : '#F0FDF4' }]}>
-                                <Text style={[styles.statusText, { color: dispute.status === 'mediation' ? '#991B1B' : '#16A34A' }]}>
-                                    {dispute.status === 'mediation' ? 'Médiation' : 'Résolu'}
+                            <View style={[styles.statusBadge, { backgroundColor: dispute.status === 'mediation' || dispute.status === 'open' ? '#FEF2F2' : '#F0FDF4' }]}>
+                                <Text style={[styles.statusText, { color: dispute.status === 'mediation' || dispute.status === 'open' ? '#991B1B' : '#16A34A' }]}>
+                                    {dispute.status === 'mediation' ? 'Médiation' : dispute.status === 'open' ? 'Ouvert' : 'Résolu'}
                                 </Text>
                             </View>
-                            <Text style={styles.disputeDate}>{dispute.date}</Text>
+                            <Text style={styles.disputeDate}>{new Date(dispute.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</Text>
                         </View>
-                        <Text style={styles.missionTitle}>{dispute.mission}</Text>
+                        <Text style={styles.missionTitle}>{dispute.reason}</Text>
                         <View style={styles.partyRow}>
-                            <Ionicons name="people-outline" size={14} color={Colors.textMuted} />
-                            <Text style={styles.partyText}>{dispute.artisan} vs {dispute.client}</Text>
+                            <Ionicons name="alert-circle-outline" size={14} color={Colors.textMuted} />
+                            <Text style={styles.partyText}>Dossier #{dispute.id.slice(0, 8)}</Text>
                         </View>
                         <View style={styles.footer}>
                             <Text style={styles.footerLink}>Voir la conversation d'arbitrage</Text>
@@ -70,6 +79,12 @@ export default function DisputeCenterScreen() {
                         </View>
                     </Pressable>
                 ))}
+                {disputes.length === 0 && (
+                    <View style={styles.emptyItems}>
+                        <Ionicons name="shield-outline" size={48} color={Colors.textMuted} />
+                        <Text style={styles.emptyText}>Aucun litige en cours.</Text>
+                    </View>
+                )}
 
                 <View style={styles.helpBox}>
                     <Text style={styles.helpTitle}>Comment ça marche ?</Text>
@@ -109,4 +124,6 @@ const styles = StyleSheet.create({
     helpBox: { backgroundColor: "#FEE2E2", padding: 20, borderRadius: 24, marginTop: 10 },
     helpTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#991B1B", marginBottom: 10 },
     helpText: { fontSize: 13, color: "#991B1B", marginBottom: 6, opacity: 0.8 },
+    emptyItems: { alignItems: "center", marginTop: 40, opacity: 0.5 },
+    emptyText: { color: Colors.textMuted, fontSize: 14, marginTop: 10 },
 });

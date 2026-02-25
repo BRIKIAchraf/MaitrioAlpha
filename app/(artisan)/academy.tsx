@@ -6,12 +6,26 @@ import {
     ScrollView,
     Pressable,
     Image,
+    Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    withRepeat,
+    withSequence,
+    withDelay,
+    interpolateColor
+} from "react-native-reanimated";
 import Colors from "@/constants/colors";
+import { useAuth } from "@/context/auth-context";
+import { apiRequest } from "@/utils/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const COURSES = [
     { id: "1", title: "Installation Pompe à Chaleur", level: "Avancé", duration: "4h", progress: 60, image: "thermometer" },
@@ -21,7 +35,28 @@ const COURSES = [
 
 export default function AcademyScreen() {
     const insets = useSafeAreaInsets();
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
     const [tab, setTab] = useState<"courses" | "recycling">("courses");
+
+    const { data: ecoImpact } = useQuery({
+        queryKey: ["/api/eco/stats", user?.id],
+    });
+
+    const logRecyclingMutation = useMutation({
+        mutationFn: async () => {
+            // Simulate ticket scan/log
+            return apiRequest("/missions/eco/log", {
+                method: "POST",
+                body: JSON.stringify({ artisanId: user?.id, points: 50 }),
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/eco/stats"] });
+            Alert.alert("Bravo !", "Vos points éco-artisan ont été mis à jour.");
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+    });
 
     return (
         <View style={styles.container}>
@@ -65,7 +100,7 @@ export default function AcademyScreen() {
                         </View>
 
                         <Text style={styles.sectionTitle}>Formations en cours</Text>
-                        {COURSES.map((course) => (
+                        {COURSES.map((course: any) => (
                             <View key={course.id} style={styles.courseCard}>
                                 <View style={styles.courseIconBox}>
                                     <MaterialCommunityIcons name={course.image as any} size={32} color={Colors.primary} />
@@ -92,10 +127,10 @@ export default function AcademyScreen() {
                         <View style={styles.ecoCard}>
                             <Ionicons name="leaf" size={40} color="#059669" />
                             <Text style={styles.ecoTitle}>Impact Éco-Artisan</Text>
-                            <Text style={styles.ecoDesc}>Vous avez recyclé 45kg de cuivre cette semaine.</Text>
-                            <View style={styles.pointsBadge}>
-                                <Text style={styles.pointsText}>+450 Points Maîtrio</Text>
-                            </View>
+                            <Text style={styles.ecoDesc}>Contribuez à une économie circulaire pour gagner des avantages.</Text>
+                            <Animated.View style={styles.pointsBadge}>
+                                <Text style={styles.pointsText}>{user?.ecoPoints || 0} Points Maîtrio</Text>
+                            </Animated.View>
                         </View>
 
                         <Text style={styles.sectionTitle}>Matériaux Valorisés</Text>
@@ -110,7 +145,10 @@ export default function AcademyScreen() {
                             </View>
                         </View>
 
-                        <Pressable style={styles.logBtn}>
+                        <Pressable
+                            style={({ pressed }: { pressed: boolean }) => [styles.logBtn, pressed && { opacity: 0.9 }]}
+                            onPress={() => logRecyclingMutation.mutate()}
+                        >
                             <Ionicons name="camera" size={24} color="white" />
                             <Text style={styles.logBtnText}>Scanner un ticket de recyclage</Text>
                         </Pressable>

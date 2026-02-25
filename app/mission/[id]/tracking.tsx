@@ -82,7 +82,7 @@ function MissionTrackingScreen() {
                         lng: currentLocation.lng + (dLng / magnitude) * step,
                     };
                     setCurrentLocation(nextLocation);
-                    
+
                 }
             }
         }, 5000);
@@ -145,39 +145,32 @@ function MissionTrackingScreen() {
             </MapView>
 
             {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <View style={[styles.header, mission.isSos && { backgroundColor: "rgba(239, 68, 68, 0.95)" }, { paddingTop: insets.top + 10 }]}>
                 <Pressable
-                    style={styles.backButton}
+                    style={[styles.backButton, mission.isSos && { backgroundColor: "rgba(255,255,255,0.2)" }]}
                     onPress={() => router.back()}
                 >
-                    <Ionicons name="chevron-back" size={24} color={Colors.text} />
+                    <Ionicons name="chevron-back" size={24} color={mission.isSos ? "#fff" : Colors.text} />
                 </Pressable>
                 <View style={styles.headerInfo}>
-                    <Text style={styles.headerTitle}>{mission?.title}</Text>
+                    <Text style={[styles.headerTitle, mission.isSos && { color: "#fff" }]}>{mission.isSos ? "🚨 SOS EN COURS" : mission.title}</Text>
                     <View style={styles.guaranteeRow}>
-                        <Ionicons name="time-outline" size={14} color={Colors.primary} />
-                        <Text style={styles.guaranteeText}>Garantie 30min: 14:22 restants</Text>
+                        <Ionicons name="time-outline" size={14} color={mission.isSos ? "#fff" : Colors.primary} />
+                        <Text style={[styles.guaranteeText, mission.isSos && { color: "#fff" }]}>Garantie 30min: 14:22 restants</Text>
                     </View>
                 </View>
-                <Pressable
-                    style={styles.visioBtn}
-                    onPress={() => Alert.alert("Visio-Check Gratuite", "Lancement de l'appel vidéo de 5 min pour confirmer le diagnostic...")}
-                >
-                    <Ionicons name="videocam" size={20} color="white" />
-                </Pressable>
-                <Pressable
-                    style={styles.sosButton}
-                    onPress={() => Alert.alert(
-                        "SIGNALEMENT D'URGENCE",
-                        "Voulez-vous signaler un danger immédiat ?",
-                        [
-                            { text: "Annuler", style: "cancel" },
-                            { text: "ALERTER", style: "destructive" }
-                        ]
-                    )}
-                >
-                    <Text style={styles.sosText}>S.O.S</Text>
-                </Pressable>
+                {mission.isSos ? (
+                    <View style={styles.sosStatusBadge}>
+                        <Text style={styles.sosStatusText}>PRIORITAIRE</Text>
+                    </View>
+                ) : (
+                    <Pressable
+                        style={styles.visioBtn}
+                        onPress={() => Alert.alert("Visio-Check Gratuite", "Lancement de l'appel vidéo de 5 min pour confirmer le diagnostic...")}
+                    >
+                        <Ionicons name="videocam" size={20} color="white" />
+                    </Pressable>
+                )}
             </View>
 
             {/* Bottom Sheet */}
@@ -250,8 +243,23 @@ function MissionTrackingScreen() {
 
                 {distance <= 50 && (
                     <View style={styles.geofenceAlert}>
-                        <Ionicons name="location" size={16} color="#16A34A" />
-                        <Text style={styles.geofenceText}>Zone de confiance atteinte (Portée 50m)</Text>
+                        <Ionicons name="shield-checkmark" size={16} color="#16A34A" />
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.geofenceText}>Zone de confiance atteinte (Portée 50m)</Text>
+                            <Text style={styles.geofenceSubText}>Paiement séquestre prêt pour la libération.</Text>
+                        </View>
+                        {user?.role === 'artisan' && (
+                            <Pressable
+                                style={styles.checkInBtn}
+                                onPress={() => {
+                                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                    updateMission(mission.id, { status: "arrived" });
+                                    Alert.alert("Check-in Automatique", "Votre arrivée a été confirmée par GPS.");
+                                }}
+                            >
+                                <Text style={styles.checkInBtnText}>CHECK-IN</Text>
+                            </Pressable>
+                        )}
                     </View>
                 )}
 
@@ -413,6 +421,11 @@ const styles = StyleSheet.create({
     geofenceText: { fontSize: 12, color: "#16A34A", fontFamily: "Inter_600SemiBold", marginLeft: 6 },
     quoteButton: { backgroundColor: Colors.primary, borderColor: Colors.primary },
     completeButton: { backgroundColor: Colors.success, borderColor: Colors.success },
+    sosStatusBadge: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
+    sosStatusText: { fontSize: 10, fontFamily: "Inter_800ExtraBold", color: "#fff" },
+    geofenceSubText: { fontSize: 10, color: "#16A34A", opacity: 0.8 },
+    checkInBtn: { backgroundColor: "#16A34A", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+    checkInBtnText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff" },
 });
 
 export default MissionTrackingScreen;

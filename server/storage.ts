@@ -13,6 +13,10 @@ export interface IStorage {
   getUser(id: string): Promise<schema.User | undefined>;
   getUserByUsername(username: string): Promise<schema.User | undefined>;
   createUser(user: schema.InsertUser): Promise<schema.User>;
+  updateUser(id: string, data: Partial<schema.User>): Promise<schema.User | undefined>;
+
+  getUserAddresses(userId: string): Promise<schema.UserAddress[]>;
+  createUserAddress(address: schema.InsertUserAddress): Promise<schema.UserAddress>;
 
   getArtisanProfile(userId: string): Promise<schema.ArtisanProfile | undefined>;
   getArtisanProfileById(id: string): Promise<schema.ArtisanProfile | undefined>;
@@ -37,6 +41,7 @@ export interface IStorage {
   getWallet(userId: string): Promise<schema.Wallet | undefined>;
   createWallet(wallet: schema.InsertWallet): Promise<schema.Wallet>;
   updateWalletBalance(userId: string, amount: number): Promise<schema.Wallet | undefined>;
+  updateEscrowBalance(userId: string, amount: number): Promise<schema.Wallet | undefined>;
   getWalletTransactions(walletId: string): Promise<schema.WalletTransaction[]>;
   createWalletTransaction(tx: schema.InsertWalletTransaction): Promise<schema.WalletTransaction>;
 
@@ -52,6 +57,23 @@ export interface IStorage {
   getNotifications(userId: string): Promise<schema.Notification[]>;
   createNotification(notification: schema.InsertNotification): Promise<schema.Notification>;
   markNotificationRead(id: string): Promise<void>;
+
+  getEquipment(userId: string): Promise<schema.Equipment[]>;
+  createEquipment(eq: schema.InsertEquipment): Promise<schema.Equipment>;
+  getInventory(artisanId: string): Promise<schema.InventoryItem[]>;
+  createInventoryItem(item: schema.InsertInventory): Promise<schema.InventoryItem>;
+  updateInventoryQuantity(id: string, change: number): Promise<schema.InventoryItem | undefined>;
+
+  createDispute(dispute: schema.InsertDispute): Promise<schema.Dispute>;
+  getDispute(id: string): Promise<schema.Dispute | undefined>;
+  updateDispute(id: string, data: Partial<schema.Dispute>): Promise<schema.Dispute | undefined>;
+  getDisputesByMission(missionId: string): Promise<schema.Dispute[]>;
+  createDisputeMessage(msg: schema.InsertDisputeMessage): Promise<schema.DisputeMessage>;
+  getDisputeMessages(disputeId: string): Promise<schema.DisputeMessage[]>;
+
+  findArtisansInRadius(lat: number, lng: number, radiusKm: number, specialty?: string): Promise<any[]>;
+  updateUserPoints(userId: string, type: 'loyalty' | 'eco', points: number): Promise<schema.User | undefined>;
+  buyInventoryItem(itemId: string, buyerId: string, quantity: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -68,6 +90,20 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: schema.InsertUser) {
     const [user] = await db.insert(schema.users).values(insertUser).returning();
     return user;
+  }
+
+  async updateUser(id: string, data: Partial<schema.User>) {
+    const [updated] = await db.update(schema.users).set(data).where(eq(schema.users.id, id)).returning();
+    return updated;
+  }
+
+  async getUserAddresses(userId: string) {
+    return db.select().from(schema.userAddresses).where(eq(schema.userAddresses.userId, userId));
+  }
+
+  async createUserAddress(address: schema.InsertUserAddress) {
+    const [created] = await db.insert(schema.userAddresses).values(address).returning();
+    return created;
   }
 
   async getArtisanProfile(userId: string) {
@@ -172,6 +208,15 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async updateEscrowBalance(userId: string, amount: number) {
+    const [updated] = await db
+      .update(schema.wallets)
+      .set({ escrowBalance: sql`${schema.wallets.escrowBalance} + ${amount}` })
+      .where(eq(schema.wallets.userId, userId))
+      .returning();
+    return updated;
+  }
+
   async getWalletTransactions(walletId: string) {
     return db.select().from(schema.walletTransactions).where(eq(schema.walletTransactions.walletId, walletId)).orderBy(desc(schema.walletTransactions.createdAt));
   }
@@ -221,6 +266,120 @@ export class DatabaseStorage implements IStorage {
 
   async markNotificationRead(id: string) {
     await db.update(schema.notifications).set({ read: true }).where(eq(schema.notifications.id, id));
+  }
+
+  async getEquipment(userId: string) {
+    return db.select().from(schema.equipmentRegistry).where(eq(schema.equipmentRegistry.userId, userId));
+  }
+
+  async createEquipment(eqp: schema.InsertEquipment) {
+    const [created] = await db.insert(schema.equipmentRegistry).values(eqp).returning();
+    return created;
+  }
+
+  async getInventory(artisanId: string) {
+    return db.select().from(schema.inventory).where(eq(schema.inventory.artisanId, artisanId));
+  }
+
+  async createInventoryItem(item: schema.InsertInventory) {
+    const [created] = await db.insert(schema.inventory).values(item).returning();
+    return created;
+  }
+
+  async updateInventoryQuantity(id: string, change: number) {
+    const [updated] = await db
+      .update(schema.inventory)
+      .set({ quantity: sql`${schema.inventory.quantity} + ${change}` })
+      .where(eq(schema.inventory.id, id))
+      .returning();
+    return updated;
+  }
+
+  async createDispute(dispute: schema.InsertDispute) {
+    const [created] = await db.insert(schema.disputes).values(dispute).returning();
+    return created;
+  }
+
+  async getDisputesByMission(missionId: string) {
+    return db.select().from(schema.disputes).where(eq(schema.disputes.missionId, missionId));
+  }
+
+  async getDispute(id: string) {
+    const [dispute] = await db.select().from(schema.disputes).where(eq(schema.disputes.id, id));
+    return dispute;
+  }
+
+  async updateDispute(id: string, data: Partial<schema.Dispute>) {
+    const [updated] = await db.update(schema.disputes).set(data).where(eq(schema.disputes.id, id)).returning();
+    return updated;
+  }
+
+  async createDisputeMessage(msg: schema.InsertDisputeMessage) {
+    const [created] = await db.insert(schema.disputeMessages).values(msg).returning();
+    return created;
+  }
+
+  async getDisputeMessages(disputeId: string) {
+    return db.select().from(schema.disputeMessages).where(eq(schema.disputeMessages.disputeId, disputeId)).orderBy(schema.disputeMessages.createdAt);
+  }
+
+  async findArtisansInRadius(lat: number, lng: number, radiusKm: number, specialty?: string) {
+    const distanceSql = sql<number>`6371 * acos(cos(radians(${lat})) * cos(radians(${schema.artisanProfiles.latitude})) * cos(radians(${schema.artisanProfiles.longitude}) - radians(${lng})) + sin(radians(${lat})) * sin(radians(${schema.artisanProfiles.latitude})))`;
+
+    let conditions = and(
+      eq(schema.artisanProfiles.availability, true),
+      sql`${distanceSql} <= ${radiusKm}`
+    );
+
+    if (specialty) {
+      conditions = and(conditions, sql`${schema.artisanProfiles.specialties}::jsonb ?? ${specialty}`);
+    }
+
+    const results = await db
+      .select({
+        profile: schema.artisanProfiles,
+        user: schema.users,
+        distance: distanceSql,
+      })
+      .from(schema.artisanProfiles)
+      .innerJoin(schema.users, eq(schema.artisanProfiles.userId, schema.users.id))
+      .where(conditions)
+      .orderBy(distanceSql);
+
+    return results.map(r => ({ ...r.profile, user: r.user, distance: r.distance }));
+  }
+
+  async buyInventoryItem(itemId: string, buyerId: string, quantity: number) {
+    const [item] = await db.select().from(schema.inventory).where(eq(schema.inventory.id, itemId));
+    if (!item || (item.quantity || 0) < quantity) return false;
+
+    const totalPrice = (item.price || 0) * quantity;
+    const buyerWallet = await this.getWallet(buyerId);
+    if (!buyerWallet || (buyerWallet.balance || 0) < totalPrice) return false;
+
+    // Transactional logic simulated via multiple updates
+    await this.updateInventoryQuantity(itemId, -quantity);
+    await this.updateWalletBalance(buyerId, -totalPrice);
+    await this.updateWalletBalance(item.artisanId, totalPrice); // Seller is the artisan
+
+    await this.createWalletTransaction({
+      walletId: buyerWallet.id,
+      amount: totalPrice,
+      type: "debit",
+      description: `Achat Marketplace: ${item.name}`,
+    });
+
+    return true;
+  }
+
+  async updateUserPoints(userId: string, type: 'loyalty' | 'eco', points: number) {
+    const field = type === 'loyalty' ? schema.users.loyaltyPoints : schema.users.ecoPoints;
+    const [updated] = await db
+      .update(schema.users)
+      .set({ [type === 'loyalty' ? 'loyaltyPoints' : 'ecoPoints']: sql`${field} + ${points}` })
+      .where(eq(schema.users.id, userId))
+      .returning();
+    return updated;
   }
 }
 
