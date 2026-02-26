@@ -28,6 +28,8 @@ import { useMissions } from "@/context/mission-context";
 import { apiRequest } from "@/utils/api";
 import { useMutation } from "@tanstack/react-query";
 
+import { LottieAnimation } from "@/components/LottieAnimation";
+
 const { width } = Dimensions.get("window");
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -131,6 +133,9 @@ export default function ClientHomeScreen() {
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>{greeting}</Text>
             <Text style={styles.userName} numberOfLines={1}>{user?.name?.split(" ")[0] || "Client"}</Text>
+          </View>
+          <View style={{ position: 'absolute', right: -20, top: -20, opacity: 0.2 }}>
+             <LottieAnimation source={require("@/assets/images/favicon.png")} style={{ width: 100, height: 100 }} />
           </View>
           <Pressable
             style={({ pressed }: { pressed: boolean }) => [styles.notifBtn, pressed && { opacity: 0.7 }]}

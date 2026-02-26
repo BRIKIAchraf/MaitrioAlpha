@@ -78,7 +78,7 @@ export default function LoginScreen() {
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Email (Test: admin / client / artisan)</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons name="mail-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
                 <TextInput
@@ -87,7 +87,6 @@ export default function LoginScreen() {
                   placeholderTextColor={Colors.textMuted}
                   value={email}
                   onChangeText={setEmail}
-                  keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
@@ -95,7 +94,7 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Mot de passe</Text>
+              <Text style={styles.label}>Mot de passe (Test: n'importe quoi)</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons name="lock-closed-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
                 <TextInput

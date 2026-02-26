@@ -3,8 +3,8 @@ import * as schema from "@shared/schema";
 
 const artisansData = [
   {
-    username: "marc.dupont",
-    password: "artisan123",
+    username: "artisan",
+    password: "password123",
     firstName: "Marc",
     lastName: "Dupont",
     email: "marc.dupont@email.fr",
@@ -26,7 +26,7 @@ const artisansData = [
   },
   {
     username: "sophie.martin",
-    password: "artisan123",
+    password: "password123",
     firstName: "Sophie",
     lastName: "Martin",
     email: "sophie.martin@email.fr",
@@ -48,7 +48,7 @@ const artisansData = [
   },
   {
     username: "karim.benali",
-    password: "artisan123",
+    password: "password123",
     firstName: "Karim",
     lastName: "Benali",
     email: "karim.benali@email.fr",
@@ -70,7 +70,7 @@ const artisansData = [
   },
   {
     username: "claire.rousseau",
-    password: "artisan123",
+    password: "password123",
     firstName: "Claire",
     lastName: "Rousseau",
     email: "claire.rousseau@email.fr",
@@ -92,7 +92,7 @@ const artisansData = [
   },
   {
     username: "thomas.lefevre",
-    password: "artisan123",
+    password: "password123",
     firstName: "Thomas",
     lastName: "Lefevre",
     email: "thomas.lefevre@email.fr",
@@ -114,7 +114,7 @@ const artisansData = [
   },
   {
     username: "nadia.cherif",
-    password: "artisan123",
+    password: "password123",
     firstName: "Nadia",
     lastName: "Cherif",
     email: "nadia.cherif@email.fr",
@@ -136,7 +136,7 @@ const artisansData = [
   },
   {
     username: "pierre.garnier",
-    password: "artisan123",
+    password: "password123",
     firstName: "Pierre",
     lastName: "Garnier",
     email: "pierre.garnier@email.fr",
@@ -158,7 +158,7 @@ const artisansData = [
   },
   {
     username: "julie.petit",
-    password: "artisan123",
+    password: "password123",
     firstName: "Julie",
     lastName: "Petit",
     email: "julie.petit@email.fr",
@@ -180,7 +180,7 @@ const artisansData = [
   },
   {
     username: "hassan.diallo",
-    password: "artisan123",
+    password: "password123",
     firstName: "Hassan",
     lastName: "Diallo",
     email: "hassan.diallo@email.fr",
@@ -202,7 +202,7 @@ const artisansData = [
   },
   {
     username: "emma.bernard",
-    password: "artisan123",
+    password: "password123",
     firstName: "Emma",
     lastName: "Bernard",
     email: "emma.bernard@email.fr",
@@ -225,9 +225,9 @@ const artisansData = [
 ];
 
 const clientsData = [
-  { username: "jean.client", password: "client123", firstName: "Jean", lastName: "Lambert", email: "jean.lambert@email.fr", phone: "+33611111111", role: "client" },
-  { username: "marie.client", password: "client123", firstName: "Marie", lastName: "Duval", email: "marie.duval@email.fr", phone: "+33622222222", role: "client" },
-  { username: "paul.client", password: "client123", firstName: "Paul", lastName: "Moreau", email: "paul.moreau@email.fr", phone: "+33633333333", role: "client" },
+  { username: "client", password: "password123", firstName: "Jean", lastName: "Lambert", email: "jean.lambert@email.fr", phone: "+33611111111", role: "client" },
+  { username: "marie.client", password: "password123", firstName: "Marie", lastName: "Duval", email: "marie.duval@email.fr", phone: "+33622222222", role: "client" },
+  { username: "paul.client", password: "password123", firstName: "Paul", lastName: "Moreau", email: "paul.moreau@email.fr", phone: "+33633333333", role: "client" },
 ];
 
 export async function seedDatabase() {
