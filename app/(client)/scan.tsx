@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     View,
     Text,
@@ -16,13 +16,22 @@ import Colors from "@/constants/colors";
 
 const { width, height } = Dimensions.get("window");
 
+import { CameraView, useCameraPermissions } from "expo-camera";
+
 export default function VisionScanScreen() {
     const insets = useSafeAreaInsets();
+    const [permission, requestPermission] = useCameraPermissions();
     const [isScanning, setIsScanning] = useState(false);
     const [scanResult, setScanResult] = useState<null | { title: string, desc: string, price: string }>(null);
 
-    const scanLineY = new Animated.Value(0);
-    const hudOpacity = new Animated.Value(0.6);
+    const scanLineY = React.useRef(new Animated.Value(0)).current;
+    const hudOpacity = React.useRef(new Animated.Value(0.6)).current;
+
+    useEffect(() => {
+        if (!permission) {
+            requestPermission();
+        }
+    }, []);
 
     useEffect(() => {
         if (isScanning) {
@@ -59,13 +68,29 @@ export default function VisionScanScreen() {
         }, 4000);
     };
 
+    if (!permission) {
+        return <View style={styles.container} />;
+    }
+
+    if (!permission.granted) {
+        return (
+            <View style={styles.container}>
+                <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+                    <Text style={{ color: "white", textAlign: "center", marginBottom: 20 }}>
+                        Nous avons besoin de votre permission pour utiliser la caméra afin de scanner vos équipements.
+                    </Text>
+                    <Pressable style={styles.bookBtn} onPress={requestPermission}>
+                        <Text style={styles.bookBtnText}>Accorder la permission</Text>
+                    </Pressable>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
-            {/* "Camera" Background Mock */}
-            <View style={styles.cameraMock}>
-                <LinearGradient colors={["#1E293B", "#0F172A"]} style={styles.cameraOverlay} />
-                <MaterialCommunityIcons name="water-pump" size={120} color="rgba(255,255,255,0.1)" />
-            </View>
+            <CameraView style={StyleSheet.absoluteFill as any} facing="back" />
+            <LinearGradient colors={["transparent", "rgba(15,23,42,0.6)"]} style={StyleSheet.absoluteFill as any} />
 
             {/* Viewfinder UI */}
             <View style={styles.viewfinderContainer}>

@@ -116,7 +116,7 @@ export default function ClientProfileScreen() {
         </View>
 
         <Pressable
-          style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.8 }]}
+          style={({ pressed }: { pressed: boolean }) => [styles.logoutBtn, pressed && { opacity: 0.8 }]}
           onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
@@ -141,7 +141,7 @@ function StatItem({ value, label }: { value: string; label: string }) {
 function MenuItem({ icon, label, onPress }: { icon: any; label: string; onPress: () => void }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
+      style={({ pressed }: { pressed: boolean }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
       onPress={onPress}
     >
       <View style={styles.menuItemIcon}>

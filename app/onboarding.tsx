@@ -71,7 +71,7 @@ export default function OnboardingScreen() {
     <View style={[styles.container, { paddingTop: insets.top || (Platform.OS === "web" ? 67 : 0) }]}>
       <View style={styles.skipRow}>
         {currentIndex < SLIDES.length - 1 ? (
-          <Pressable style={({ pressed }) => pressed && { opacity: 0.6 }} onPress={handleSkip}>
+          <Pressable style={({ pressed }: { pressed: boolean }) => pressed && { opacity: 0.6 }} onPress={handleSkip}>
             <Text style={styles.skipText}>Passer</Text>
           </Pressable>
         ) : (
@@ -86,8 +86,8 @@ export default function OnboardingScreen() {
         pagingEnabled
         scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(_, i) => i.toString()}
-        renderItem={({ item }) => (
+        keyExtractor={(_: any, i: number) => i.toString()}
+        renderItem={({ item }: { item: any }) => (
           <View style={[styles.slide, { width }]}>
             <View style={[styles.iconCircle, { backgroundColor: item.color + "18" }]}>
               <View style={[styles.iconInner, { backgroundColor: item.color + "25" }]}>
@@ -103,13 +103,13 @@ export default function OnboardingScreen() {
 
       <View style={[styles.bottomSection, { paddingBottom: insets.bottom || (Platform.OS === "web" ? 34 : 24) }]}>
         <View style={styles.dots}>
-          {SLIDES.map((_, i) => (
+          {SLIDES.map((_: any, i: number) => (
             <View key={i} style={[styles.dot, i === currentIndex && styles.dotActive]} />
           ))}
         </View>
 
         <Pressable
-          style={({ pressed }) => [styles.nextBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
+          style={({ pressed }: { pressed: boolean }) => [styles.nextBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
           onPress={handleNext}
         >
           <LinearGradient

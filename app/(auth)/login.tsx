@@ -59,7 +59,7 @@ export default function LoginScreen() {
       >
         <View style={styles.headerRow}>
           <Pressable
-            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
             onPress={() => router.back()}
           >
             <Ionicons name="chevron-back" size={24} color={Colors.text} />
@@ -120,7 +120,7 @@ export default function LoginScreen() {
             ) : null}
 
             <Pressable
-              style={({ pressed }) => [styles.submitBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }, isLoading && { opacity: 0.7 }]}
+              style={({ pressed }: { pressed: boolean }) => [styles.submitBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }, isLoading && { opacity: 0.7 }]}
               onPress={handleLogin}
               disabled={isLoading}
             >
@@ -145,7 +145,7 @@ export default function LoginScreen() {
             </View>
 
             <Pressable
-              style={({ pressed }) => [styles.registerLink, pressed && { opacity: 0.7 }]}
+              style={({ pressed }: { pressed: boolean }) => [styles.registerLink, pressed && { opacity: 0.7 }]}
               onPress={() => router.push("/(auth)/register")}
             >
               <Text style={styles.registerLinkText}>Pas encore de compte ? </Text>

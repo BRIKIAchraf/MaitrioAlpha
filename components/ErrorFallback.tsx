@@ -11,7 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import Feather from "@expo/vector-icons/Feather";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -64,7 +64,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           onPress={() => setIsModalVisible(true)}
           accessibilityLabel="View error details"
           accessibilityRole="button"
-          style={({ pressed }) => [
+          style={({ pressed }: { pressed: boolean }) => [
             styles.topButton,
             {
               top: insets.top + 16,
@@ -88,7 +88,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
 
         <Pressable
           onPress={handleRestart}
-          style={({ pressed }) => [
+          style={({ pressed }: { pressed: boolean }) => [
             styles.button,
             {
               backgroundColor: theme.link,
@@ -134,7 +134,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                   onPress={() => setIsModalVisible(false)}
                   accessibilityLabel="Close error details"
                   accessibilityRole="button"
-                  style={({ pressed }) => [
+                  style={({ pressed }: { pressed: boolean }) => [
                     styles.closeButton,
                     { opacity: pressed ? 0.6 : 1 },
                   ]}

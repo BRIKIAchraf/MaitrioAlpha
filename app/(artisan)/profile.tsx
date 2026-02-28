@@ -129,7 +129,7 @@ export default function ArtisanProfileScreen() {
 
         {user?.kycStatus !== "verified" && (
           <Pressable
-            style={({ pressed }) => [styles.kycBanner, pressed && { opacity: 0.9 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.kycBanner, pressed && { opacity: 0.9 }]}
             onPress={() => {}}
           >
             <LinearGradient
@@ -160,7 +160,7 @@ export default function ArtisanProfileScreen() {
         </View>
 
         <Pressable
-          style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.8 }]}
+          style={({ pressed }: { pressed: boolean }) => [styles.logoutBtn, pressed && { opacity: 0.8 }]}
           onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
@@ -184,7 +184,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 
 function MenuItem({ icon, label }: { icon: any; label: string }) {
   return (
-    <Pressable style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]} onPress={() => {}}>
+    <Pressable style={({ pressed }: { pressed: boolean }) => [styles.menuItem, pressed && { opacity: 0.7 }]} onPress={() => {}}>
       <View style={styles.menuIcon}>
         <Ionicons name={icon} size={20} color={Colors.accent} />
       </View>

@@ -1,61 +1,87 @@
-import React from "react";
-import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
+import React, { useEffect, useState } from "react";
+import * as RN from "react-native";
+import { FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
+import { apiRequest } from "@/lib/query-client";
 
-const MOCK_DISPUTES = [
-    { id: "1", ref: "MS-8291", client: "Marie D.", artisan: "Jean D.", status: "ouvert", severity: "high" },
-    { id: "2", ref: "MS-7712", client: "Lucas M.", artisan: "Sophie B.", status: "en cours", severity: "medium" },
-    { id: "3", ref: "MS-9010", client: "Emma R.", artisan: "Luc P.", status: "résolu", severity: "low" },
-];
+interface Dispute {
+    id: string;
+    ref: string;
+    clientName?: string;
+    artisanName?: string;
+    status: string;
+    severity: string;
+}
 
 export default function DisputeCenter() {
     const insets = useSafeAreaInsets();
+    const [disputes, setDisputes] = useState<Dispute[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchDisputes();
+    }, []);
+
+    const fetchDisputes = async () => {
+        try {
+            setIsLoading(true);
+            const res = await apiRequest("GET", "/api/admin/disputes"); // Assuming this exists
+            const data = await res.json();
+            setDisputes(data);
+        } catch (error) {
+            console.error("Failed to fetch disputes:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Centre de Litiges</Text>
-                <Text style={styles.subtitle}>Médiation et résolution de conflits</Text>
-            </View>
+        <RN.View style={[styles.container, { paddingTop: insets.top }]}>
+            <RN.View style={styles.header}>
+                <RN.Text style={styles.title}>Centre de Litiges</RN.Text>
+                <RN.Text style={styles.subtitle}>Médiation et résolution de conflits</RN.Text>
+            </RN.View>
 
-            <FlatList
-                data={MOCK_DISPUTES}
+            <RN.FlatList
+                data={disputes}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.list}
-                renderItem={({ item }) => (
-                    <Pressable style={styles.card}>
-                        <View style={styles.cardHeader}>
-                            <View style={[styles.severity, { backgroundColor: getSeverityColor(item.severity) }]} />
-                            <Text style={styles.ref}>#{item.ref}</Text>
-                            <View style={[styles.status, { backgroundColor: item.status === "résolu" ? Colors.successLight : Colors.warningLight }]}>
-                                <Text style={[styles.statusText, { color: item.status === "résolu" ? Colors.success : Colors.warning }]}>
+                onRefresh={fetchDisputes}
+                refreshing={isLoading}
+                renderItem={({ item }: { item: any }) => (
+                    <RN.Pressable style={styles.card}>
+                        <RN.View style={styles.cardHeader}>
+                            <RN.View style={[styles.severity, { backgroundColor: getSeverityColor(item.severity) }]} />
+                            <RN.Text style={styles.ref}>#{item.ref || item.id.slice(0, 8)}</RN.Text>
+                            <RN.View style={[styles.status, { backgroundColor: item.status === "résolu" ? Colors.successLight : Colors.warningLight }]}>
+                                <RN.Text style={[styles.statusText, { color: item.status === "résolu" ? Colors.success : Colors.warning }]}>
                                     {item.status}
-                                </Text>
-                            </View>
-                        </View>
+                                </RN.Text>
+                            </RN.View>
+                        </RN.View>
 
-                        <View style={styles.participants}>
-                            <View style={styles.participant}>
-                                <Text style={styles.role}>Client</Text>
-                                <Text style={styles.name}>{item.client}</Text>
-                            </View>
+                        <RN.View style={styles.participants}>
+                            <RN.View style={styles.participant}>
+                                <RN.Text style={styles.role}>Client</RN.Text>
+                                <RN.Text style={styles.name}>{item.clientName || "N/A"}</RN.Text>
+                            </RN.View>
                             <Ionicons name="swap-horizontal" size={16} color={Colors.textMuted} />
-                            <View style={styles.participant}>
-                                <Text style={styles.role}>Artisan</Text>
-                                <Text style={styles.name}>{item.artisan}</Text>
-                            </View>
-                        </View>
+                            <RN.View style={styles.participant}>
+                                <RN.Text style={styles.role}>Artisan</RN.Text>
+                                <RN.Text style={styles.name}>{item.artisanName || "N/A"}</RN.Text>
+                            </RN.View>
+                        </RN.View>
 
-                        <View style={styles.footer}>
-                            <Text style={styles.footerAction}>Ouvrir le dossier</Text>
+                        <RN.View style={styles.footer}>
+                            <RN.Text style={styles.footerAction}>Ouvrir le dossier</RN.Text>
                             <Ionicons name="chevron-forward" size={14} color={Colors.primary} />
-                        </View>
-                    </Pressable>
+                        </RN.View>
+                    </RN.Pressable>
                 )}
             />
-        </View>
+        </RN.View>
     );
 }
 
@@ -67,7 +93,7 @@ function getSeverityColor(sev: string) {
     }
 }
 
-const styles = StyleSheet.create({
+const styles = RN.StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
     header: { padding: 20 },
     title: { fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.text },
@@ -77,11 +103,18 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.surface,
         borderRadius: 20,
         padding: 16,
-        shadowColor: Colors.shadow,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 1,
-        shadowRadius: 8,
-        elevation: 3
+        ...Platform.select({
+            web: {
+                boxShadow: `0px 4px 8px ${Colors.shadow}`,
+            },
+            default: {
+                shadowColor: Colors.shadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 1,
+                shadowRadius: 8,
+                elevation: 3
+            }
+        })
     },
     cardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 15 },
     severity: { width: 4, height: 16, borderRadius: 2 },

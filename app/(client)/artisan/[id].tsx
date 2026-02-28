@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
+import { apiRequest } from "@/lib/query-client";
 
 const { width } = Dimensions.get("window");
 
@@ -24,54 +25,72 @@ interface ArtisanDetail {
     reviewsCount: number;
     price: number;
     description: string;
-    portfolio: string[];
+    portfolio: { imageUrl: string; title?: string }[];
     certifications: string[];
     reviews: { id: string; user: string; rating: number; comment: string; date: string; }[];
     verified: boolean;
 }
 
-const MOCK_DETAILS: Record<string, ArtisanDetail> = {
-    "1": {
-        name: "Ahmed Mansour",
-        category: "Plomberie",
-        rating: 4.8,
-        reviewsCount: 124,
-        price: 45,
-        description: "Artisan plombier avec 10 ans d'expérience. Spécialiste des installations complexes et du dépannage d'urgence. Disponible 7j/7 pour vos fuites, installations de sanitaires et robinetterie.",
-        portfolio: [
-            "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=400",
-            "https://images.unsplash.com/photo-1504148455328-c376907d081c?q=80&w=400",
-            "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=400",
-        ],
-        certifications: ["Kbis Vérifié", "Assurance RC Pro", "Diplôme d'État Plomberie"],
-        reviews: [
-            { id: "r1", user: "Clara D.", rating: 5, comment: "Travail impeccable et très ponctuel. Je recommande vivement Ahmed !", date: "Il y a 2 jours" },
-            { id: "r2", user: "Marc P.", rating: 4, comment: "Bonne prestation, un peu cher mais la qualité est là.", date: "Il y a 1 semaine" },
-        ],
-        verified: true,
-    },
-    // Default fallback for other IDs
-    default: {
-        name: "Artisan Elite",
-        category: "Multiservices",
-        rating: 5.0,
-        reviewsCount: 12,
-        price: 40,
-        description: "Artisan qualifié prêt à vous aider pour tous vos besoins domestiques.",
-        portfolio: [
-            "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=400",
-        ],
-        certifications: ["Vérifié par Maîtrio"],
-        reviews: [],
-        verified: true,
-    }
-};
-
 export default function ArtisanDetailsScreen() {
     const { id } = useLocalSearchParams();
     const insets = useSafeAreaInsets();
-    const artisan = (id && MOCK_DETAILS[id as string]) || MOCK_DETAILS.default;
+    const [artisan, setArtisan] = useState<ArtisanDetail | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("portfolio");
+
+    React.useEffect(() => {
+        if (id) {
+            fetchArtisanDetails();
+        }
+    }, [id]);
+
+    const fetchArtisanDetails = async () => {
+        try {
+            setIsLoading(true);
+            const res = await apiRequest("GET", `/api/artisans/${id}`);
+            const data = await res.json();
+
+            setArtisan({
+                name: `${data.user.firstName} ${data.user.lastName}`,
+                category: (() => {
+                    try {
+                        const specs = JSON.parse(data.specialties || "[]");
+                        return specs[0] || "Artisan";
+                    } catch { return "Artisan"; }
+                })(),
+                rating: data.rating || 0,
+                reviewsCount: data.reviews?.length || 0,
+                price: 45, // Backend price not in schema, placeholder
+                description: data.bio || "Aucune description fournie.",
+                portfolio: data.portfolio || [],
+                certifications: (() => {
+                    try {
+                        return JSON.parse(data.certifications || "[]");
+                    } catch { return []; }
+                })(),
+                reviews: (data.reviews || []).map((r: any) => ({
+                    id: r.id,
+                    user: "Client Vérifié", // In a real app we'd fetch the name
+                    rating: r.rating,
+                    comment: r.comment,
+                    date: new Date(r.createdAt).toLocaleDateString()
+                })),
+                verified: data.kycStatus === "verified"
+            });
+        } catch (error) {
+            console.error("Failed to fetch artisan details:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (isLoading || !artisan) {
+        return (
+            <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+                <Text style={{ fontSize: 16, color: Colors.textMuted }}>Chargement du profil...</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -79,7 +98,7 @@ export default function ArtisanDetailsScreen() {
                 <View style={styles.hero}>
                     <LinearGradient colors={["rgba(27,44,78,0.8)", "transparent"]} style={styles.heroOverlay} />
                     <Image
-                        source={{ uri: artisan.portfolio[0] }}
+                        source={{ uri: artisan.portfolio[0]?.imageUrl || "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=400" }}
                         style={styles.heroImage}
                     />
                     <Pressable
@@ -162,8 +181,8 @@ export default function ArtisanDetailsScreen() {
 
                     {activeTab === "portfolio" ? (
                         <View style={styles.portfolioGrid}>
-                            {artisan.portfolio.map((img: string, i: number) => (
-                                <Image key={i} source={{ uri: img }} style={styles.portfolioImg} />
+                            {artisan.portfolio.map((item: any, i: number) => (
+                                <Image key={i} source={{ uri: item.imageUrl }} style={styles.portfolioImg} />
                             ))}
                         </View>
                     ) : (

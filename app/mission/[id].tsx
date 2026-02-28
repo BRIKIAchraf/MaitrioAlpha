@@ -274,7 +274,7 @@ export default function MissionDetailScreen() {
         style={[styles.headerGrad, { paddingTop: (insets.top || (Platform.OS === "web" ? 67 : 0)) + 8 }]}
       >
         <View style={styles.headerBar}>
-          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7, backgroundColor: "rgba(255,255,255,0.3)" }]} onPress={() => router.back()}>
+          <Pressable style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.7, backgroundColor: "rgba(255,255,255,0.3)" }]} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
           <Text style={styles.headerTitle} numberOfLines={1}>{mission.isSos ? "🚨 MISSION SOS" : mission.title}</Text>
@@ -422,7 +422,7 @@ export default function MissionDetailScreen() {
 
         {(mission.status === "completed" || mission.status === "validated") && (
           <Pressable
-            style={({ pressed }) => [styles.invoiceCard, pressed && { opacity: 0.9 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.invoiceCard, pressed && { opacity: 0.9 }]}
             onPress={() => Alert.alert("Facture", "Téléchargement de la facture PDF génération...")}
           >
             <View style={styles.invoiceIcon}>
@@ -471,7 +471,7 @@ export default function MissionDetailScreen() {
               multiline
             />
             <Pressable
-              style={({ pressed }) => [styles.submitRatingBtn, pressed && { opacity: 0.9 }, ratingData.overall === 0 && { opacity: 0.5 }]}
+              style={({ pressed }: { pressed: boolean }) => [styles.submitRatingBtn, pressed && { opacity: 0.9 }, ratingData.overall === 0 && { opacity: 0.5 }]}
               onPress={submitRating}
               disabled={ratingData.overall === 0 || isLoading}
             >
@@ -593,14 +593,14 @@ export default function MissionDetailScreen() {
           {isClient && mission.status === "completed" && (
             <>
               <ActionButton label="Valider et liberer le paiement" icon="shield-checkmark" onPress={handleValidate} isLoading={isLoading} gold />
-              <Pressable style={({ pressed }) => [styles.disputeBtn, pressed && { opacity: 0.8 }]} onPress={handleDispute}>
+              <Pressable style={({ pressed }: { pressed: boolean }) => [styles.disputeBtn, pressed && { opacity: 0.8 }]} onPress={handleDispute}>
                 <Ionicons name="warning-outline" size={18} color={Colors.danger} />
                 <Text style={styles.disputeBtnText}>Signaler un litige</Text>
               </Pressable>
             </>
           )}
           {mission.artisanId && (
-            <Pressable style={({ pressed }) => [styles.chatBtn, pressed && { opacity: 0.9 }]} onPress={handleChat}>
+            <Pressable style={({ pressed }: { pressed: boolean }) => [styles.chatBtn, pressed && { opacity: 0.9 }]} onPress={handleChat}>
               <LinearGradient colors={[Colors.primary, Colors.primaryLight]} style={styles.chatBtnGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
                 <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
                 <Text style={styles.chatBtnText}>{isClient ? "Contacter l'artisan" : "Contacter le client"}</Text>
@@ -655,7 +655,7 @@ function InfoCard({ title, icon, content }: { title: string; icon: any; content:
 
 function ActionButton({ label, icon, onPress, isLoading, gold }: { label: string; icon: any; onPress: () => void; isLoading: boolean; gold?: boolean }) {
   return (
-    <Pressable style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]} onPress={onPress} disabled={isLoading}>
+    <Pressable style={({ pressed }: { pressed: boolean }) => [styles.actionBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]} onPress={onPress} disabled={isLoading}>
       <LinearGradient colors={gold ? [Colors.accent, Colors.accentLight] : [Colors.primary, Colors.primaryLight]} style={styles.actionBtnGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
         {isLoading ? <ActivityIndicator color={gold ? Colors.primary : "#fff"} /> : (
           <>

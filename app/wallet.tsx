@@ -40,7 +40,7 @@ export default function WalletScreen() {
         style={[styles.header, { paddingTop: (insets.top || (Platform.OS === "web" ? 67 : 0)) + 8 }]}
       >
         <View style={styles.headerBar}>
-          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
+          <Pressable style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
           <Text style={styles.headerTitle}>{isArtisan ? "Portefeuille" : "Paiements"}</Text>
@@ -101,9 +101,9 @@ export default function WalletScreen() {
             scrollEnabled={!!filtered.length}
             contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
+            renderItem={({ item }: { item: any }) => (
               <Pressable
-                style={({ pressed }) => [styles.transactionCard, pressed && { opacity: 0.95 }]}
+                style={({ pressed }: { pressed: boolean }) => [styles.transactionCard, pressed && { opacity: 0.95 }]}
                 onPress={() => item.missionId && router.push({ pathname: "/mission/[id]", params: { id: item.missionId } })}
               >
                 <View style={[styles.transactionIcon, { backgroundColor: item.type === "credit" ? Colors.successLight : Colors.warningLight }]}>

@@ -1,65 +1,108 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, Pressable, Image, TextInput } from "react-native";
+import React, { useState, useEffect } from "react";
+import * as RN from "react-native";
+import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
+import { apiRequest } from "@/lib/query-client";
 
-const MOCK_USERS = [
-    { id: "1", name: "Marie Dupont", email: "marie@example.com", role: "client", status: "actif", date: "2024-02-10" },
-    { id: "2", name: "Pierre Martin", email: "pierre@example.com", role: "client", status: "actif", date: "2024-02-12" },
-    { id: "3", name: "Sophie Bernard", email: "sophie@example.com", role: "client", status: "suspendu", date: "2024-01-28" },
-];
+interface User {
+    id: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+    email: string;
+    role: string;
+    kycStatus?: string;
+    createdAt: string;
+    name?: string;
+}
 
 export default function UserManagement() {
     const insets = useSafeAreaInsets();
     const [search, setSearch] = useState("");
+    const [users, setUsers] = useState<User[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        try {
+            setIsLoading(true);
+            const res = await apiRequest("GET", "/api/admin/users");
+            const data = await res.json();
+            setUsers(data.map((u: any) => ({
+                ...u,
+                name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username
+            })));
+        } catch (error) {
+            console.error("Failed to fetch users:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const filteredUsers = users.filter(user =>
+        user.name?.toLowerCase().includes(search.toLowerCase()) ||
+        user.email.toLowerCase().includes(search.toLowerCase()) ||
+        user.role.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Gestion Utilisateurs</Text>
-                <Text style={styles.subtitle}>{MOCK_USERS.length} clients inscrits</Text>
-            </View>
+        <RN.View style={[styles.container, { paddingTop: insets.top }]}>
+            <RN.View style={styles.header}>
+                <RN.Text style={styles.title}>Gestion Utilisateurs</RN.Text>
+                <RN.Text style={styles.subtitle}>{isLoading ? "Chargement..." : `${filteredUsers.length} comptes trouvés`}</RN.Text>
+            </RN.View>
 
-            <View style={styles.searchBar}>
+            <RN.View style={styles.searchBar}>
                 <Ionicons name="search" size={18} color={Colors.textMuted} />
-                <TextInput
-                    placeholder="Chercher par nom ou email..."
+                <RN.TextInput
+                    placeholder="Chercher par nom, email ou rôle..."
                     style={styles.searchInput}
                     value={search}
                     onChangeText={setSearch}
                 />
-            </View>
+            </RN.View>
 
-            <FlatList
-                data={MOCK_USERS}
+            <RN.FlatList
+                data={filteredUsers}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.list}
-                renderItem={({ item }) => (
-                    <View style={styles.userCard}>
-                        <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>{item.name[0]}</Text>
-                        </View>
-                        <View style={styles.userInfo}>
-                            <Text style={styles.userName}>{item.name}</Text>
-                            <Text style={styles.userEmail}>{item.email}</Text>
-                        </View>
-                        <View style={[styles.statusBadge, item.status === "suspendu" && styles.statusBadgeSuspend]}>
-                            <Text style={[styles.statusText, item.status === "suspendu" && styles.statusTextSuspend]}>
-                                {item.status}
-                            </Text>
-                        </View>
-                        <Pressable style={styles.actionBtn}>
+                onRefresh={fetchUsers}
+                refreshing={isLoading}
+                renderItem={({ item }: { item: any }) => (
+                    <RN.View style={styles.userCard}>
+                        <RN.View style={styles.avatar}>
+                            <RN.Text style={styles.avatarText}>{item.name?.[0]}</RN.Text>
+                        </RN.View>
+                        <RN.View style={styles.userInfo}>
+                            <RN.Text style={styles.userName}>{item.name}</RN.Text>
+                            <RN.Text style={styles.userEmail}>{item.email} • {item.role}</RN.Text>
+                        </RN.View>
+                        <RN.View style={[styles.statusBadge, item.kycStatus === "rejected" && styles.statusBadgeSuspend]}>
+                            <RN.Text style={[styles.statusText, item.kycStatus === "rejected" && styles.statusTextSuspend]}>
+                                {item.kycStatus || "actif"}
+                            </RN.Text>
+                        </RN.View>
+                        <RN.Pressable style={styles.actionBtn}>
                             <Ionicons name="ellipsis-vertical" size={18} color={Colors.textMuted} />
-                        </Pressable>
-                    </View>
+                        </RN.Pressable>
+                    </RN.View>
+                )}
+                ListEmptyComponent={() => (
+                    <RN.View style={{ alignItems: "center", marginTop: 40 }}>
+                        <RN.Text style={{ color: Colors.textMuted }}>Aucun utilisateur trouvé.</RN.Text>
+                    </RN.View>
                 )}
             />
-        </View>
+        </RN.View>
     );
 }
 
-const styles = StyleSheet.create({
+const styles = RN.StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
     header: { padding: 20 },
     title: { fontSize: 22, fontFamily: "Inter_700Bold", color: Colors.text },
@@ -84,11 +127,18 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.surface,
         padding: 16,
         borderRadius: 18,
-        shadowColor: Colors.shadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 1,
-        shadowRadius: 6,
-        elevation: 2
+        ...Platform.select({
+            web: {
+                boxShadow: `0px 2px 6px ${Colors.shadow}`,
+            },
+            default: {
+                shadowColor: Colors.shadow,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 1,
+                shadowRadius: 6,
+                elevation: 2
+            }
+        })
     },
     avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primary + "10", alignItems: "center", justifyContent: "center" },
     avatarText: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.primary },

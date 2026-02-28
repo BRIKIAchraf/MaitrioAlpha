@@ -1,15 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Platform,
-  Dimensions,
-  Alert,
-  Vibration,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Platform, Dimensions, Alert, Vibration, Animated } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";

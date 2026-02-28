@@ -141,7 +141,7 @@ export default function MarketplaceScreen() {
                             <Text style={styles.stockText}>Quantité: {item.quantity}</Text>
                         </View>
                         <Pressable
-                            style={({ pressed }) => [styles.buyBtn, pressed && { opacity: 0.8 }]}
+                            style={({ pressed }: { pressed: boolean }) => [styles.buyBtn, pressed && { opacity: 0.8 }]}
                             onPress={() => handleBuy(item)}
                         >
                             <Text style={styles.buyBtnText}>{tab === "buy" ? "Acheter" : "Gérer"}</Text>

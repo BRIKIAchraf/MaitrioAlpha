@@ -1,108 +1,112 @@
-import React, { useState } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    Pressable,
-    Alert,
-} from "react-native";
-import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import * as RN from "react-native";
+import { Link, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
+import { apiRequest } from "@/lib/query-client";
 
-const MOCK_DISPUTES = [
-    {
-        id: "d1",
-        missionTitle: "Réparation Fuite Cuisine",
-        artisanName: "Ahmed Mansour",
-        status: "mediator_review",
-        date: "24 Fév 2026",
-        reason: "Travail non terminé",
-        severity: "medium",
-    },
-    {
-        id: "d2",
-        missionTitle: "Installation Tableau Électrique",
-        artisanName: "Lucas Bernard",
-        status: "resolved",
-        date: "12 Jan 2026",
-        reason: "Retard excessif",
-        severity: "low",
-    },
-];
+interface Dispute {
+    id: string;
+    missionTitle: string;
+    artisanName: string;
+    status: string;
+    date: string;
+    reason: string;
+    severity: string;
+}
 
 export default function DisputeCenterScreen() {
     const insets = useSafeAreaInsets();
-    const [disputes, setDisputes] = useState(MOCK_DISPUTES);
+    const [disputes, setDisputes] = useState<Dispute[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchDisputes();
+    }, []);
+
+    const fetchDisputes = async () => {
+        try {
+            setIsLoading(true);
+            const res = await apiRequest("GET", "/api/disputes"); // For the current client
+            const data = await res.json();
+            setDisputes(data);
+        } catch (error) {
+            console.error("Failed to fetch disputes:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
-        <View style={styles.container}>
+        <RN.View style={styles.container}>
             <LinearGradient colors={[Colors.danger, "#991B1B"]} style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                <View style={styles.headerRow}>
-                    <Pressable style={styles.backBtn} onPress={() => router.back()}>
+                <RN.View style={styles.headerRow}>
+                    <RN.Pressable style={styles.backBtn} onPress={() => router.back()}>
                         <Ionicons name="chevron-back" size={24} color="#fff" />
-                    </Pressable>
-                    <Text style={styles.headerTitle}>Centre de Litiges</Text>
-                    <View style={{ width: 44 }} />
-                </View>
-                <Text style={styles.headerSub}>Votre sécurité est notre priorité. Nos médiateurs interviennent sous 24h.</Text>
+                    </RN.Pressable>
+                    <RN.Text style={styles.headerTitle}>Centre de Litiges</RN.Text>
+                    <RN.View style={{ width: 44 }} />
+                </RN.View>
+                <RN.Text style={styles.headerSub}>Votre sécurité est notre priorité. Nos médiateurs interviennent sous 24h.</RN.Text>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.summaryBox}>
-                    <View style={styles.summaryItem}>
-                        <Text style={styles.summaryValue}>{disputes.filter((d: any) => d.status !== "resolved").length}</Text>
-                        <Text style={styles.summaryLabel}>En cours</Text>
-                    </View>
-                    <View style={styles.summaryDivider} />
-                    <View style={styles.summaryItem}>
-                        <Text style={styles.summaryValue}>{disputes.filter((d: any) => d.status === "resolved").length}</Text>
-                        <Text style={styles.summaryLabel}>Résolus</Text>
-                    </View>
-                </View>
+            <RN.ScrollView
+                contentContainerStyle={styles.scrollContent}
+                refreshControl={<RN.RefreshControl refreshing={isLoading} onRefresh={fetchDisputes} />}
+            >
+                <RN.View style={styles.summaryBox}>
+                    <RN.View style={styles.summaryItem}>
+                        <RN.Text style={styles.summaryValue}>{disputes.filter((d) => d.status !== "resolved").length}</RN.Text>
+                        <RN.Text style={styles.summaryLabel}>En cours</RN.Text>
+                    </RN.View>
+                    <RN.View style={styles.summaryDivider} />
+                    <RN.View style={styles.summaryItem}>
+                        <RN.Text style={styles.summaryValue}>{disputes.filter((d) => d.status === "resolved").length}</RN.Text>
+                        <RN.Text style={styles.summaryLabel}>Résolus</RN.Text>
+                    </RN.View>
+                </RN.View>
 
-                <Text style={styles.sectionTitle}>Mes Dossiers</Text>
-                {disputes.map((dispute: any) => (
-                    <Pressable key={dispute.id} style={styles.disputeCard} onPress={() => Alert.alert("Détails", "Détails du litige bientôt disponibles.")}>
-                        <View style={styles.cardHeader}>
-                            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(dispute.status) + "20" }]}>
-                                <Text style={[styles.statusText, { color: getStatusColor(dispute.status) }]}>{getStatusLabel(dispute.status)}</Text>
-                            </View>
-                            <Text style={styles.date}>{dispute.date}</Text>
-                        </View>
-                        <Text style={styles.missionTitle}>{dispute.missionTitle}</Text>
-                        <Text style={styles.artisanName}>Contre: {dispute.artisanName}</Text>
-                        <View style={styles.reasonRow}>
+                <RN.Text style={styles.sectionTitle}>Mes Dossiers</RN.Text>
+                {disputes.map((dispute) => (
+                    <RN.Pressable key={dispute.id} style={styles.disputeCard} onPress={() => RN.Alert.alert("Détails", "Détails du litige bientôt disponibles.")}>
+                        <RN.View style={styles.cardHeader}>
+                            <RN.View style={[styles.statusBadge, { backgroundColor: getStatusColor(dispute.status) + "20" }]}>
+                                <RN.Text style={[styles.statusText, { color: getStatusColor(dispute.status) }]}>{getStatusLabel(dispute.status)}</RN.Text>
+                            </RN.View>
+                            <RN.Text style={styles.date}>{new Date(dispute.date).toLocaleDateString()}</RN.Text>
+                        </RN.View>
+                        <RN.Text style={styles.missionTitle}>{dispute.missionTitle}</RN.Text>
+                        <RN.Text style={styles.artisanName}>Contre: {dispute.artisanName}</RN.Text>
+                        <RN.View style={styles.reasonRow}>
                             <Ionicons name="alert-circle" size={14} color={Colors.textMuted} />
-                            <Text style={styles.reasonText}>{dispute.reason}</Text>
-                        </View>
-                        <View style={styles.cardFooter}>
-                            <Text style={styles.detailsLink}>Ouvrir le dossier</Text>
+                            <RN.Text style={styles.reasonText}>{dispute.reason}</RN.Text>
+                        </RN.View>
+                        <RN.View style={styles.cardFooter}>
+                            <RN.Text style={styles.detailsLink}>Ouvrir le dossier</RN.Text>
                             <Ionicons name="chevron-forward" size={14} color={Colors.primary} />
-                        </View>
-                    </Pressable>
+                        </RN.View>
+                    </RN.Pressable>
                 ))}
 
-                <View style={styles.mediationInfo}>
+                <RN.View style={styles.mediationInfo}>
                     <LinearGradient colors={[Colors.primary + "10", Colors.primary + "05"]} style={styles.mediationGrad}>
                         <Ionicons name="shield-checkmark" size={32} color={Colors.primary} />
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.mediationTitle}>Protection Maîtrio</Text>
-                            <Text style={styles.mediationText}>
+                        <RN.View style={{ flex: 1 }}>
+                            <RN.Text style={styles.mediationTitle}>Protection Maîtrio</RN.Text>
+                            <RN.Text style={styles.mediationText}>
                                 Tous vos paiements sont bloqués jusqu'à résolution. En cas de blocage, un médiateur certifié intervient.
-                            </Text>
-                        </View>
+                            </RN.Text>
+                        </RN.View>
                     </LinearGradient>
-                </View>
-            </ScrollView>
+                </RN.View>
+            </RN.ScrollView>
 
-            <Pressable style={[styles.newDisputeBtn, { bottom: insets.bottom + 20 }]} onPress={() => Alert.alert("Nouveau Litige", "Veuillez sélectionner une mission terminée dans votre historique pour initier un litige.")}>
-                <Text style={styles.newDisputeText}>Signaler un nouveau problème</Text>
-            </Pressable>
-        </View>
+            <RN.Pressable style={[styles.newDisputeBtn, { bottom: insets.bottom + 20 }]} onPress={() => RN.Alert.alert("Nouveau Litige", "Veuillez sélectionner une mission terminée dans votre historique pour initier un litige.")}>
+                <RN.Text style={styles.newDisputeText}>Signaler un nouveau problème</RN.Text>
+            </RN.Pressable>
+        </RN.View>
     );
 }
 
@@ -122,7 +126,7 @@ function getStatusLabel(status: string) {
     }
 }
 
-const styles = StyleSheet.create({
+const styles = RN.StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.background },
     header: { paddingHorizontal: 20, paddingBottom: 30, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
     headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 15 },

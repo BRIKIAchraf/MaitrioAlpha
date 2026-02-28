@@ -6,61 +6,64 @@ import {
     ScrollView,
     Pressable,
     Image,
-    Dimensions,
+    Alert,
+    Platform,
 } from "react-native";
 import { router } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/auth-context";
-import { apiRequest } from "@/utils/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Alert } from "react-native";
+import { apiRequest } from "@/lib/query-client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const { width } = Dimensions.get("window");
-
-const MOCK_PROJECTS = [
-    { id: "1", title: "Rénovation Salle de Bain", category: "Plomberie", before: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=400", after: "https://images.unsplash.com/photo-1620626011761-9963d7b52750?q=80&w=400" },
-    { id: "2", title: "Installation Ballon", category: "Chauffage", before: "https://images.unsplash.com/photo-1542013936693-884638332954?q=80&w=400", after: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=400" },
-];
+interface Project {
+    id: string;
+    title: string;
+    category: string;
+    beforeImageUrl?: string;
+    afterImageUrl?: string;
+}
 
 export default function PortfolioManagementScreen() {
-    const insets = useSafeAreaInsets();
     const { user } = useAuth();
     const queryClient = useQueryClient();
-    const [projects, setProjects] = useState(MOCK_PROJECTS);
+
+    const projectsQuery = useQuery<Project[]>({
+        queryKey: ["/api/artisan/portfolio"],
+        queryFn: async () => {
+            const res = await apiRequest("GET", "/api/artisan/portfolio");
+            return res.json();
+        },
+        enabled: !!user?.id,
+    });
 
     const addProjectMutation = useMutation({
-        mutationFn: async (newProject: any) => {
-            return apiRequest("/api/artisan/portfolio", {
-                method: "POST",
-                body: JSON.stringify({ ...newProject, artisanId: user?.id }),
-            });
+        mutationFn: async (newProject: Partial<Project>) => {
+            const res = await apiRequest("POST", "/api/artisan/portfolio", { ...newProject, artisanId: user?.id });
+            return res.json();
         },
         onSuccess: () => {
             Alert.alert("Succès", "Votre nouveau projet a été ajouté à votre portfolio.");
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            // In a real app, we'd invalidate queries here
-            // queryClient.invalidateQueries({ queryKey: ["/api/artisan/portfolio"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/artisan/portfolio"] });
         },
     });
 
+    const projects = projectsQuery.data || [];
+
     const addNewProject = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        // Simulation of trigger - in production this would open a form
         addProjectMutation.mutate({
-            title: "Nouveau Projet Industriel",
-            category: "Général",
-            before: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=400",
-            after: "https://images.unsplash.com/photo-1542013936693-884638332954?q=80&w=400"
+            title: "Nouveau Projet",
+            category: "Rénovation",
         });
     };
 
     return (
         <View style={styles.container}>
-            <LinearGradient colors={[Colors.primary, "#312E81"]} style={[styles.header, { paddingTop: insets.top + 20 }]}>
+            <LinearGradient colors={[Colors.primary, "#312E81"]} style={styles.header}>
                 <View style={styles.headerRow}>
                     <Pressable onPress={() => router.back()} style={styles.backBtn}>
                         <Ionicons name="arrow-back" size={24} color="white" />
@@ -80,21 +83,25 @@ export default function PortfolioManagementScreen() {
                     </Pressable>
                 </View>
 
-                <Text style={styles.sectionTitle}>Chantiers Réalisés</Text>
-                {projects.map((project: any) => (
+                <Text style={styles.sectionTitle}>Chantiers Réalisés ({projects.length})</Text>
+                {projects.map((project: Project) => (
                     <View key={project.id} style={styles.projectCard}>
                         <Text style={styles.projectTitle}>{project.title}</Text>
                         <Text style={styles.projectCat}>{project.category}</Text>
 
                         <View style={styles.comparisonRow}>
-                            <View style={styles.imageBox}>
-                                <Image source={{ uri: project.before }} style={styles.projectImg} />
-                                <View style={styles.tag}><Text style={styles.tagText}>AVANT</Text></View>
-                            </View>
-                            <View style={styles.imageBox}>
-                                <Image source={{ uri: project.after }} style={styles.projectImg} />
-                                <View style={[styles.tag, { backgroundColor: Colors.success }]}><Text style={styles.tagText}>APRÈS</Text></View>
-                            </View>
+                            {project.beforeImageUrl && (
+                                <View style={styles.imageBox}>
+                                    <Image source={{ uri: project.beforeImageUrl }} style={styles.projectImg} />
+                                    <View style={styles.tag}><Text style={styles.tagText}>AVANT</Text></View>
+                                </View>
+                            )}
+                            {project.afterImageUrl && (
+                                <View style={styles.imageBox}>
+                                    <Image source={{ uri: project.afterImageUrl }} style={styles.projectImg} />
+                                    <View style={[styles.tag, { backgroundColor: Colors.success }]}><Text style={styles.tagText}>APRÈS</Text></View>
+                                </View>
+                            )}
                         </View>
 
                         <View style={styles.projectActions}>
@@ -117,7 +124,7 @@ export default function PortfolioManagementScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#F8FAFC" },
-    header: { paddingHorizontal: 25, paddingBottom: 30 },
+    header: { paddingHorizontal: 25, paddingBottom: 30, paddingTop: 60 },
     headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 15 },
     backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" },
     headerTitle: { color: "white", fontSize: 20, fontFamily: "Inter_700Bold", marginLeft: 15 },
@@ -129,7 +136,24 @@ const styles = StyleSheet.create({
     uploadBtn: { backgroundColor: Colors.primary, paddingHorizontal: 30, paddingVertical: 12, borderRadius: 15, marginTop: 20 },
     uploadBtnText: { color: "white", fontFamily: "Inter_800ExtraBold", fontSize: 14 },
     sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 20 },
-    projectCard: { backgroundColor: "white", borderRadius: 24, padding: 20, marginBottom: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+    projectCard: {
+        backgroundColor: "white",
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 20,
+        ...Platform.select({
+            web: {
+                boxShadow: `0px 4px 10px rgba(0, 0, 0, 0.05)`,
+            },
+            default: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.05,
+                shadowRadius: 10,
+                elevation: 2
+            }
+        })
+    },
     projectTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.text },
     projectCat: { fontSize: 12, color: Colors.primary, fontFamily: "Inter_600SemiBold", marginTop: 4 },
     comparisonRow: { flexDirection: "row", gap: 15, marginTop: 15 },

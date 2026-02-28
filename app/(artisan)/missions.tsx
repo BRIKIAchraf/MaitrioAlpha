@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+// @ts-ignore
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Pressable,
   Platform,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,7 +16,24 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/auth-context";
-import { useMissions } from "@/context/mission-context";
+import { apiRequest } from "@/lib/query-client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+interface Mission {
+  id: string;
+  title: string;
+  clientName?: string;
+  description: string;
+  category: string;
+  status: string;
+  address: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  budget?: number;
+  urgency: string;
+  finalPrice?: number;
+  estimatedPrice?: number;
+}
 
 const FILTERS = [
   { key: "available", label: "Disponibles" },
@@ -37,38 +55,55 @@ const CATEGORY_ICONS: Record<string, string> = {
 export default function ArtisanMissionsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { getAvailableMissions, getArtisanMissions, acceptMission, refreshMissions } = useMissions();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState("available");
 
-  useEffect(() => {
-    if (user) refreshMissions(user.id, "artisan");
-  }, [user?.id]);
+  const missionsQuery = useQuery<Mission[]>({
+    queryKey: ["/api/missions"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/missions");
+      return res.json();
+    },
+    enabled: !!user?.id,
+  });
 
-  const available = getAvailableMissions();
-  const my = user ? getArtisanMissions(user.id) : [];
-  const list = filter === "available" ? available : my;
+  const acceptMutation = useMutation({
+    mutationFn: async (missionId: string) => {
+      const res = await apiRequest("PATCH", `/api/missions/${missionId}`, {
+        status: "accepted",
+        artisanId: user?.id
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      queryClient.invalidateQueries({ queryKey: ["/api/missions"] });
+      setFilter("my");
+    },
+  });
 
   async function handleAccept(missionId: string) {
-    if (!user) return;
     Alert.alert("Accepter la mission ?", "Vous vous engagez à réaliser cette mission dans les délais convenus.", [
       { text: "Annuler", style: "cancel" },
       {
         text: "Accepter",
-        onPress: async () => {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await acceptMission(missionId, user.id, user.name);
-          setFilter("my");
-        },
+        onPress: () => acceptMutation.mutate(missionId),
       },
     ]);
   }
 
+  const allMissions = missionsQuery.data || [];
+  const list = allMissions.filter((m: Mission) => {
+    if (filter === "available") return m.status === "pending";
+    return m.status === "accepted" || m.status === "in_progress";
+  });
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top || (Platform.OS === "web" ? 67 : 0) }]}>
+    <View style={[styles.container, { paddingTop: insets.top || 0 }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Missions</Text>
         <View style={styles.countPill}>
-          <Text style={styles.countText}>{filter === "available" ? available.length : my.length}</Text>
+          <Text style={styles.countText}>{list.length}</Text>
         </View>
       </View>
 
@@ -94,17 +129,17 @@ export default function ArtisanMissionsScreen() {
 
       <FlatList
         data={list}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item: Mission) => item.id}
         contentContainerStyle={[
           styles.listContent,
           !list.length && styles.listEmpty,
-          { paddingBottom: Platform.OS === "web" ? 34 : 100 },
+          { paddingBottom: 100 },
         ]}
-        scrollEnabled={!!list.length}
+        refreshControl={<RefreshControl refreshing={missionsQuery.isLoading} onRefresh={() => missionsQuery.refetch()} />}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
+        renderItem={({ item }: { item: Mission }) => (
           <Pressable
-            style={({ pressed }) => [styles.card, pressed && { opacity: 0.95 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.card, pressed && { opacity: 0.95 }]}
             onPress={() => router.push({ pathname: "/mission/[id]", params: { id: item.id } })}
           >
             <View style={styles.cardHeader}>
@@ -113,11 +148,11 @@ export default function ArtisanMissionsScreen() {
               </View>
               <View style={styles.cardHeaderInfo}>
                 <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardClient}>{item.clientName}</Text>
+                <Text style={styles.cardClient}>{item.clientName || "Client Maîtrio"}</Text>
               </View>
-              {item.budget && (
+              {(item.budget || item.finalPrice || item.estimatedPrice) && (
                 <View style={styles.budgetBadge}>
-                  <Text style={styles.budgetText}>{item.budget}€</Text>
+                  <Text style={styles.budgetText}>{item.budget || item.finalPrice || item.estimatedPrice}€</Text>
                 </View>
               )}
             </View>
@@ -131,13 +166,13 @@ export default function ArtisanMissionsScreen() {
               </View>
               <View style={styles.metaItem}>
                 <Ionicons name="calendar-outline" size={13} color={Colors.textMuted} />
-                <Text style={styles.metaText}>{formatDate(item.scheduledDate)} à {item.scheduledTime}</Text>
+                <Text style={styles.metaText}>{item.scheduledDate ? new Date(item.scheduledDate).toLocaleDateString() : ""} à {item.scheduledTime}</Text>
               </View>
             </View>
 
             {filter === "available" ? (
               <Pressable
-                style={({ pressed }) => [styles.acceptBtn, pressed && { opacity: 0.9 }]}
+                style={({ pressed }: { pressed: boolean }) => [styles.acceptBtn, pressed && { opacity: 0.9 }]}
                 onPress={() => handleAccept(item.id)}
               >
                 <LinearGradient
@@ -187,6 +222,7 @@ export default function ArtisanMissionsScreen() {
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; color: string; bg: string }> = {
     pending: { label: "En attente", color: Colors.warning, bg: Colors.warningLight },
+    quoted: { label: "Devis envoyé", color: Colors.info, bg: Colors.infoLight },
     accepted: { label: "Accepté", color: Colors.info, bg: Colors.infoLight },
     in_progress: { label: "En cours", color: Colors.primary, bg: Colors.infoLight },
     completed: { label: "Terminé", color: Colors.success, bg: Colors.successLight },
@@ -198,11 +234,6 @@ function StatusBadge({ status }: { status: string }) {
       <Text style={[styles.badgeText, { color: c.color }]}>{c.label}</Text>
     </View>
   );
-}
-
-function formatDate(d: string) {
-  if (!d) return "";
-  return new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
 const styles = StyleSheet.create({
@@ -231,11 +262,18 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     gap: 10,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 3,
+    ...Platform.select({
+      web: {
+        boxShadow: `0px 2px 8px ${Colors.shadow}`,
+      },
+      default: {
+        shadowColor: Colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
+        elevation: 3,
+      },
+    }),
     borderWidth: 1,
     borderColor: Colors.borderLight,
   },
@@ -268,7 +306,7 @@ const styles = StyleSheet.create({
   },
   acceptBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.primary },
   statusRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 },
+  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, minWidth: 80, alignItems: "center" },
   badgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   detailBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
   detailBtnText: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.primary },

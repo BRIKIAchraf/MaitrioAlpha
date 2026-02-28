@@ -162,34 +162,29 @@ function configureExpoAndLanding(app: express.Application) {
     log(`Dev mode: proxying web requests to Expo Metro on port ${expoWebPort}`);
 
     app.use(
-      "/",
-      (req: Request, res: Response, next: NextFunction) => {
-        if (req.path.startsWith("/api")) {
+      (req, res, next) => {
+        if (req.path.startsWith("/api") || req.path.startsWith("/ws")) {
           return next();
         }
-        next("route");
-      }
-    );
 
-    app.use(
-      createProxyMiddleware({
-        target: `http://localhost:${expoWebPort}`,
-        changeOrigin: true,
-        ws: true,
-        on: {
-          proxyReq: (proxyReq, req, res) => {
-            // Set host and origin to localhost to bypass Expo's strict security checks in dev
-            proxyReq.setHeader("host", `localhost:${expoWebPort}`);
-            proxyReq.setHeader("origin", `http://localhost:${expoWebPort}`);
+        createProxyMiddleware({
+          target: `http://localhost:${expoWebPort}`,
+          changeOrigin: true,
+          ws: true,
+          on: {
+            proxyReq: (proxyReq, req, res) => {
+              proxyReq.setHeader("host", `localhost:${expoWebPort}`);
+              proxyReq.setHeader("origin", `http://localhost:${expoWebPort}`);
+            },
+            error: (err, req, res) => {
+              log(`Proxy error: ${err.message}`);
+              if (res && !("writableEnded" in res && (res as any).writableEnded)) {
+                (res as any).status?.(502)?.send?.("Expo dev server not ready. Start Expo first.");
+              }
+            },
           },
-          error: (err, req, res) => {
-            log(`Proxy error: ${err.message}`);
-            if (res && !("writableEnded" in res && (res as any).writableEnded)) {
-              (res as any).status?.(502)?.send?.("Expo dev server not ready. Start Expo first.");
-            }
-          },
-        },
-      })
+        })(req, res, next);
+      }
     );
 
     return;
@@ -232,6 +227,7 @@ function configureExpoAndLanding(app: express.Application) {
     next();
   });
 
+  app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
   app.use(express.static(path.resolve(process.cwd(), "static-build")));
 

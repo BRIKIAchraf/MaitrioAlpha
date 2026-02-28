@@ -51,7 +51,7 @@ export default function ClientMissionsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Mes missions</Text>
         <Pressable
-          style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.8 }]}
+          style={({ pressed }: { pressed: boolean }) => [styles.addBtn, pressed && { opacity: 0.8 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             router.push("/mission/new");
@@ -110,7 +110,7 @@ export default function ClientMissionsScreen() {
             </Text>
             {filter === "all" && (
               <Pressable
-                style={({ pressed }) => [styles.createBtn, pressed && { opacity: 0.9 }]}
+                style={({ pressed }: { pressed: boolean }) => [styles.createBtn, pressed && { opacity: 0.9 }]}
                 onPress={() => router.push("/mission/new")}
               >
                 <Text style={styles.createBtnText}>Créer une demande</Text>
@@ -123,7 +123,7 @@ export default function ClientMissionsScreen() {
             return (
               <Pressable
                 key={mission.id}
-                style={({ pressed }) => [styles.card, pressed && { opacity: 0.95 }]}
+                style={({ pressed }: { pressed: boolean }) => [styles.card, pressed && { opacity: 0.95 }]}
                 onPress={() => router.push({ pathname: "/mission/[id]", params: { id: mission.id } })}
               >
                 <View style={styles.cardHeader}>

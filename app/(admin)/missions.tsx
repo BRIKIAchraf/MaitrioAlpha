@@ -1,89 +1,108 @@
-import React, { useState } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    Pressable,
-    Dimensions,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import * as RN from "react-native";
+import { RefreshControl, StyleSheet, Platform } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
+import { apiRequest } from "@/lib/query-client";
 
-const MOCK_ACTIVE_MISSIONS = [
-    { id: "m1", title: "Panne Électrique", client: "Dounia B.", artisan: "Ahmed M.", status: "in_progress", area: "Paris 15" },
-    { id: "m2", title: "Canalisation Bouchée", client: "Sami K.", artisan: "Lucas B.", status: "en_route", area: "Lyon 3" },
-    { id: "m3", title: "Fuite Gaz Urgente", client: "Yasmine H.", artisan: "Claire D.", status: "check_in", area: "Nantes Centre" },
-];
+interface Mission {
+    id: string;
+    title: string;
+    clientName?: string;
+    artisanName?: string;
+    status: string;
+    address?: string;
+}
 
 export default function AdminMissionControlScreen() {
     const insets = useSafeAreaInsets();
-    const [missions, setMissions] = useState(MOCK_ACTIVE_MISSIONS);
+    const [missions, setMissions] = useState<Mission[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchMissions();
+    }, []);
+
+    const fetchMissions = async () => {
+        try {
+            setIsLoading(true);
+            const res = await apiRequest("GET", "/api/missions"); // Assuming this returns all for admin
+            const data = await res.json();
+            setMissions(data);
+        } catch (error) {
+            console.error("Failed to fetch missions:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
-        <View style={styles.container}>
+        <RN.View style={styles.container}>
             <LinearGradient colors={["#1E293B", "#475569"]} style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                <View style={styles.headerRow}>
-                    <Pressable style={styles.backBtn} onPress={() => router.back()}>
+                <RN.View style={styles.headerRow}>
+                    <RN.Pressable style={styles.backBtn} onPress={() => router.back()}>
                         <Ionicons name="chevron-back" size={24} color="#fff" />
-                    </Pressable>
-                    <Text style={styles.headerTitle}>Mission Control</Text>
-                    <View style={{ width: 44 }} />
-                </View>
-                <Text style={styles.headerSub}>Suivi en temps réel des flux opérationnels.</Text>
+                    </RN.Pressable>
+                    <RN.Text style={styles.headerTitle}>Mission Control</RN.Text>
+                    <RN.View style={{ width: 44 }} />
+                </RN.View>
+                <RN.Text style={styles.headerSub}>Suivi en temps réel des flux opérationnels.</RN.Text>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.mapPlaceholder}>
+            <RN.ScrollView
+                contentContainerStyle={styles.scrollContent}
+                refreshControl={<RefreshControl refreshing={isLoading} onRefresh={fetchMissions} />}
+            >
+                <RN.View style={styles.mapPlaceholder}>
                     <Ionicons name="map" size={40} color={Colors.primary} />
-                    <Text style={styles.mapText}>Chargement de la Map Monde...</Text>
-                    <View style={styles.dotPulse} />
-                </View>
+                    <RN.Text style={styles.mapText}>Chargement de la Map Monde...</RN.Text>
+                    <RN.View style={styles.dotPulse} />
+                </RN.View>
 
-                <View style={styles.filterRow}>
-                    <Text style={styles.sectionTitle}>Trafic Actif ({missions.length})</Text>
-                    <View style={styles.filterBtn}>
+                <RN.View style={styles.filterRow}>
+                    <RN.Text style={styles.sectionTitle}>Trafic Actif ({missions.length})</RN.Text>
+                    <RN.View style={styles.filterBtn}>
                         <Ionicons name="filter" size={16} color={Colors.textMuted} />
-                    </View>
-                </View>
+                    </RN.View>
+                </RN.View>
 
                 {missions.map((m) => (
-                    <View key={m.id} style={styles.missionCard}>
-                        <View style={styles.cardHeader}>
-                            <View style={styles.missionInfo}>
-                                <Text style={styles.missionTitle}>{m.title}</Text>
-                                <Text style={styles.missionArea}>{m.area}</Text>
-                            </View>
-                            <View style={[styles.statusTag, { backgroundColor: getStatusColor(m.status) + "20" }]}>
-                                <View style={[styles.statusDot, { backgroundColor: getStatusColor(m.status) }]} />
-                                <Text style={[styles.statusText, { color: getStatusColor(m.status) }]}>{m.status.toUpperCase()}</Text>
-                            </View>
-                        </View>
+                    <RN.View key={m.id} style={styles.missionCard}>
+                        <RN.View style={styles.cardHeader}>
+                            <RN.View style={styles.missionInfo}>
+                                <RN.Text style={styles.missionTitle}>{m.title}</RN.Text>
+                                <RN.Text style={styles.missionArea}>{m.address || "Zone indéfinie"}</RN.Text>
+                            </RN.View>
+                            <RN.View style={[styles.statusTag, { backgroundColor: getStatusColor(m.status) + "20" }]}>
+                                <RN.View style={[styles.statusDot, { backgroundColor: getStatusColor(m.status) }]} />
+                                <RN.Text style={[styles.statusText, { color: getStatusColor(m.status) }]}>{m.status.toUpperCase()}</RN.Text>
+                            </RN.View>
+                        </RN.View>
 
-                        <View style={styles.flowRow}>
-                            <View style={styles.participant}>
-                                <View style={styles.avatarMini}><Ionicons name="person" size={12} color={Colors.textMuted} /></View>
-                                <Text style={styles.partName}>{m.client}</Text>
-                                <Text style={styles.partLabel}>Client</Text>
-                            </View>
+                        <RN.View style={styles.flowRow}>
+                            <RN.View style={styles.participant}>
+                                <RN.View style={styles.avatarMini}><Ionicons name="person" size={12} color={Colors.textMuted} /></RN.View>
+                                <RN.Text style={styles.partName}>{m.clientName || "Client"}</RN.Text>
+                                <RN.Text style={styles.partLabel}>Client</RN.Text>
+                            </RN.View>
                             <Ionicons name="swap-horizontal" size={16} color={Colors.border} />
-                            <View style={styles.participant}>
-                                <View style={styles.avatarMini}><Ionicons name="construct" size={12} color={Colors.textMuted} /></View>
-                                <Text style={styles.partName}>{m.artisan}</Text>
-                                <Text style={styles.partLabel}>Artisan</Text>
-                            </View>
-                        </View>
+                            <RN.View style={styles.participant}>
+                                <RN.View style={styles.avatarMini}><Ionicons name="construct" size={12} color={Colors.textMuted} /></RN.View>
+                                <RN.Text style={styles.partName}>{m.artisanName || "Artisan"}</RN.Text>
+                                <RN.Text style={styles.partLabel}>Artisan</RN.Text>
+                            </RN.View>
+                        </RN.View>
 
-                        <Pressable style={styles.viewBtn} onPress={() => router.push({ pathname: "/mission/[id]", params: { id: m.id } })}>
-                            <Text style={styles.viewBtnText}>Intervenir en médiateur</Text>
-                        </Pressable>
-                    </View>
+                        <RN.Pressable style={styles.viewBtn} onPress={() => router.push({ pathname: "/mission/[id]", params: { id: m.id } })}>
+                            <RN.Text style={styles.viewBtnText}>Intervenir en médiateur</RN.Text>
+                        </RN.Pressable>
+                    </RN.View>
                 ))}
-            </ScrollView>
-        </View>
+            </RN.ScrollView>
+        </RN.View>
     );
 }
 
@@ -110,7 +129,22 @@ const styles = StyleSheet.create({
     filterRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 15 },
     sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: Colors.text },
     filterBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Colors.borderLight },
-    missionCard: { backgroundColor: "#fff", borderRadius: 24, padding: 20, marginBottom: 15, borderWidth: 1, borderColor: Colors.borderLight },
+    missionCard: {
+        backgroundColor: "#fff",
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: Colors.borderLight,
+        ...Platform.select({
+            web: {
+                boxShadow: `0px 2px 4px rgba(0,0,0,0.05)`,
+            },
+            default: {
+                // No extra shadow needed if border is enough or kept as is
+            }
+        })
+    },
     cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 15 },
     missionInfo: { flex: 1 },
     missionTitle: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.text },

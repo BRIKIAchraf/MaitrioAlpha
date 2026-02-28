@@ -48,7 +48,7 @@ export default function HousingDossierScreen() {
         style={[styles.header, { paddingTop: (insets.top || (Platform.OS === "web" ? 67 : 0)) + 8 }]}
       >
         <View style={styles.headerBar}>
-          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
+          <Pressable style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
           <Text style={styles.headerTitle}>Dossier Logement</Text>
@@ -166,7 +166,7 @@ export default function HousingDossierScreen() {
             <Text style={styles.recommendTitle}>Menuiserie a reviser</Text>
             <Text style={styles.recommendDesc}>Score de 65/100 - Planifiez une inspection</Text>
           </View>
-          <Pressable style={({ pressed }) => [styles.recommendBtn, pressed && { opacity: 0.8 }]} onPress={() => router.push({ pathname: "/mission/new", params: { category: "menuiserie" } })}>
+          <Pressable style={({ pressed }: { pressed: boolean }) => [styles.recommendBtn, pressed && { opacity: 0.8 }]} onPress={() => router.push({ pathname: "/mission/new", params: { category: "menuiserie" } })}>
             <Text style={styles.recommendBtnText}>Planifier</Text>
           </Pressable>
         </View>
@@ -179,13 +179,13 @@ export default function HousingDossierScreen() {
             <Text style={styles.recommendTitle}>Controle electrique</Text>
             <Text style={styles.recommendDesc}>Derniere inspection il y a 6 mois</Text>
           </View>
-          <Pressable style={({ pressed }) => [styles.recommendBtn, pressed && { opacity: 0.8 }]} onPress={() => router.push({ pathname: "/mission/new", params: { category: "electricite" } })}>
+          <Pressable style={({ pressed }: { pressed: boolean }) => [styles.recommendBtn, pressed && { opacity: 0.8 }]} onPress={() => router.push({ pathname: "/mission/new", params: { category: "electricite" } })}>
             <Text style={styles.recommendBtnText}>Planifier</Text>
           </Pressable>
         </View>
 
         <Pressable
-          style={({ pressed }) => [styles.reportBtn, pressed && { opacity: 0.9 }]}
+          style={({ pressed }: { pressed: boolean }) => [styles.reportBtn, pressed && { opacity: 0.9 }]}
           onPress={() => Alert.alert("Rapport PDF", "Le rapport detaille de votre logement sera genere et telecharge.")}
         >
           <LinearGradient colors={[Colors.primary, Colors.primaryLight]} style={styles.reportBtnGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>

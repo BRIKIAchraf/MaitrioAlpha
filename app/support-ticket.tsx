@@ -1,7 +1,5 @@
 import React, { useState, useRef } from "react";
-import {
-  View, Text, StyleSheet, ScrollView, Pressable, Platform, TextInput, Alert, FlatList, KeyboardAvoidingView,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Platform, TextInput, Alert, FlatList, KeyboardAvoidingView, Linking } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -11,8 +9,6 @@ import Colors from "@/constants/colors";
 import { useAuth } from "@/context/auth-context";
 import { useMissions } from "@/context/mission-context";
 import { useSupport, TicketPriority } from "@/context/support-context";
-import * as Linking from "expo-linking";
-
 const CATEGORIES = ["Paiement", "Mission", "Litige", "Compte", "Technique", "Autre"];
 const PRIORITIES: { key: TicketPriority; label: string; color: string }[] = [
   { key: "low", label: "Basse", color: Colors.info },
@@ -77,7 +73,7 @@ export default function SupportTicketScreen() {
           style={[styles.header, { paddingTop: (insets.top || (Platform.OS === "web" ? 67 : 0)) + 8 }]}
         >
           <View style={styles.headerBar}>
-            <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
+            <Pressable style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={24} color="#fff" />
             </Pressable>
             <View style={styles.headerInfo}>
@@ -89,7 +85,7 @@ export default function SupportTicketScreen() {
 
         <FlatList
           data={existingTicket.responses}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: any) => item.id}
           scrollEnabled={!!existingTicket.responses.length}
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
@@ -100,7 +96,7 @@ export default function SupportTicketScreen() {
               <Text style={styles.ticketDescDate}>{new Date(existingTicket.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</Text>
             </View>
           }
-          renderItem={({ item }) => (
+          renderItem={({ item }: { item: any }) => (
             <View style={[styles.messageBubble, item.isAdmin ? styles.adminBubble : styles.userBubble]}>
               <View style={styles.messageHeader}>
                 <Ionicons name={item.isAdmin ? "shield-checkmark" : "person"} size={14} color={item.isAdmin ? Colors.info : Colors.accent} />
@@ -124,7 +120,7 @@ export default function SupportTicketScreen() {
             multiline
           />
           <Pressable
-            style={({ pressed }) => [styles.sendBtn, pressed && { opacity: 0.8 }, !responseText.trim() && { opacity: 0.5 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.sendBtn, pressed && { opacity: 0.8 }, !responseText.trim() && { opacity: 0.5 }]}
             onPress={handleSendResponse}
             disabled={!responseText.trim() || isSending}
           >
@@ -142,7 +138,7 @@ export default function SupportTicketScreen() {
         style={[styles.header, { paddingTop: (insets.top || (Platform.OS === "web" ? 67 : 0)) + 8 }]}
       >
         <View style={styles.headerBar}>
-          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
+          <Pressable style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
           <Text style={styles.headerTitle}>Nouveau ticket</Text>
@@ -210,7 +206,7 @@ export default function SupportTicketScreen() {
         </View>
 
         <Pressable
-          style={({ pressed }) => [styles.submitBtn, pressed && { opacity: 0.9 }, (!subject.trim() || !description.trim()) && { opacity: 0.5 }]}
+          style={({ pressed }: { pressed: boolean }) => [styles.submitBtn, pressed && { opacity: 0.9 }, (!subject.trim() || !description.trim()) && { opacity: 0.5 }]}
           onPress={handleCreate}
           disabled={isSending || !subject.trim() || !description.trim()}
         >

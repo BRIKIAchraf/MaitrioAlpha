@@ -1,12 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  Dimensions,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, Dimensions, Platform, Animated } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -143,7 +136,7 @@ export default function WelcomeScreen() {
         />
 
         <Pressable
-          style={({ pressed }) => [styles.loginLink, pressed && { opacity: 0.7 }]}
+          style={({ pressed }: { pressed: boolean }) => [styles.loginLink, pressed && { opacity: 0.7 }]}
           onPress={() => router.push("/(auth)/login")}
         >
           <Text style={styles.loginLinkText}>Déjà un compte ? </Text>
@@ -179,7 +172,7 @@ function RoleCard({
 }) {
   return (
     <Pressable
-      style={({ pressed }) => [
+      style={({ pressed }: { pressed: boolean }) => [
         styles.roleCard,
         primary && styles.roleCardPrimary,
         pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
@@ -248,11 +241,18 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
+    ...Platform.select({
+      web: {
+        boxShadow: `0px 8px 16px ${Colors.primary}`,
+      },
+      default: {
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+        elevation: 10,
+      }
+    }),
   },
   logoAccent: {
     position: "absolute",
@@ -295,11 +295,18 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: "center",
     gap: 6,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 3,
+    ...Platform.select({
+      web: {
+        boxShadow: `0px 2px 8px ${Colors.shadow}`,
+      },
+      default: {
+        shadowColor: Colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
+        elevation: 3,
+      }
+    }),
   },
   featureCardTitle: {
     fontSize: 11,
@@ -332,11 +339,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 4,
+    ...Platform.select({
+      web: {
+        boxShadow: `0px 4px 12px ${Colors.shadow}`,
+      },
+      default: {
+        shadowColor: Colors.shadow,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        elevation: 4
+      }
+    }),
     borderWidth: 1,
     borderColor: Colors.border,
     overflow: "hidden",

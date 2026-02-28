@@ -233,7 +233,7 @@ const clientsData = [
 export async function seedDatabase() {
   console.log("Seeding database...");
 
-  const existingUsers = await db.select().from(schema.users);
+  const existingUsers = await storage.getAllUsers();
   if (existingUsers.length > 0) {
     console.log(`Database already has ${existingUsers.length} users, skipping seed.`);
     return;

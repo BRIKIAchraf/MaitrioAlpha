@@ -41,9 +41,9 @@ export default function ClientChatScreen() {
           { paddingBottom: Platform.OS === "web" ? 34 : 100 },
         ]}
         scrollEnabled={!!conversations.length}
-        renderItem={({ item }) => (
+        renderItem={({ item }: { item: any }) => (
           <Pressable
-            style={({ pressed }) => [styles.convCard, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.convCard, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
             onPress={() => router.push({ pathname: "/chat/[id]", params: { id: item.id } })}
           >
             <View style={styles.avatarContainer}>

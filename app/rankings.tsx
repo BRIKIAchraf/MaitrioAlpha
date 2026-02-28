@@ -62,7 +62,7 @@ export default function RankingsScreen() {
                 data={RANKINGS.slice(3)}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.list}
-                renderItem={({ item }) => (
+                renderItem={({ item }: { item: any }) => (
                     <View style={styles.rankCard}>
                         <Text style={styles.rankNum}>#{item.rank}</Text>
                         <View style={styles.rankInfo}>

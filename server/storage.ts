@@ -1,10 +1,10 @@
 import { eq, desc, and, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
+import { Pool } from "pg";
 import * as schema from "@shared/schema";
 
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/maitrio",
 });
 
 export const db = drizzle(pool, { schema });
@@ -12,6 +12,7 @@ export const db = drizzle(pool, { schema });
 export interface IStorage {
   getUser(id: string): Promise<schema.User | undefined>;
   getUserByUsername(username: string): Promise<schema.User | undefined>;
+  getAllUsers(): Promise<schema.User[]>;
   createUser(user: schema.InsertUser): Promise<schema.User>;
   updateUser(id: string, data: Partial<schema.User>): Promise<schema.User | undefined>;
 
@@ -85,6 +86,10 @@ export class DatabaseStorage implements IStorage {
   async getUserByUsername(username: string) {
     const [user] = await db.select().from(schema.users).where(eq(schema.users.username, username));
     return user;
+  }
+
+  async getAllUsers() {
+    return db.select().from(schema.users);
   }
 
   async createUser(insertUser: schema.InsertUser) {
@@ -383,4 +388,294 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export class MemStorage implements IStorage {
+  private users: Map<string, schema.User>;
+  private addresses: Map<string, schema.UserAddress>;
+  private profile: Map<string, schema.ArtisanProfile>;
+  private missions: Map<string, schema.Mission>;
+  private quotes: Map<string, schema.MissionQuote>;
+  private reviews: Map<string, schema.Review>;
+  private wallets: Map<string, schema.Wallet>;
+  private transactions: Map<string, schema.WalletTransaction>;
+  private signatures: Map<string, schema.Signature>;
+  private invoices: Map<string, schema.Invoice>;
+  private portfolio: Map<string, schema.ArtisanPortfolioItem>;
+  private notifications: Map<string, schema.Notification>;
+  private equipment: Map<string, schema.Equipment>;
+  private inventory: Map<string, schema.InventoryItem>;
+  private disputes: Map<string, schema.Dispute>;
+  private disputeMessages: Map<string, schema.DisputeMessage>;
+
+  constructor() {
+    this.users = new Map();
+    this.addresses = new Map();
+    this.profile = new Map();
+    this.missions = new Map();
+    this.quotes = new Map();
+    this.reviews = new Map();
+    this.wallets = new Map();
+    this.transactions = new Map();
+    this.signatures = new Map();
+    this.invoices = new Map();
+    this.portfolio = new Map();
+    this.notifications = new Map();
+    this.equipment = new Map();
+    this.inventory = new Map();
+    this.disputes = new Map();
+    this.disputeMessages = new Map();
+  }
+
+  async getUser(id: string) { return this.users.get(id); }
+  async getUserByUsername(username: string) {
+    return Array.from(this.users.values()).find(u => u.username === username);
+  }
+  async getAllUsers() { return Array.from(this.users.values()); }
+  async createUser(insertUser: schema.InsertUser) {
+    const id = Math.random().toString(36).substring(2);
+    const user: schema.User = {
+      username: insertUser.username,
+      password: insertUser.password,
+      email: insertUser.email ?? null,
+      phone: insertUser.phone ?? null,
+      firstName: insertUser.firstName ?? null,
+      lastName: insertUser.lastName ?? null,
+      role: insertUser.role ?? "client",
+      id,
+      createdAt: new Date(),
+      avatarUrl: null,
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
+      referralCode: null,
+      referredBy: null,
+      referralCount: 0,
+      loyaltyPoints: 0,
+      ecoPoints: 0,
+      isPremium: false
+    };
+    this.users.set(id, user);
+    return user;
+  }
+  async updateUser(id: string, data: Partial<schema.User>) {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    const updated = { ...user, ...data };
+    this.users.set(id, updated);
+    return updated;
+  }
+  async getUserAddresses(userId: string) {
+    return Array.from(this.addresses.values()).filter(a => a.userId === userId);
+  }
+  async createUserAddress(address: schema.InsertUserAddress) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...address, id };
+    this.addresses.set(id, created as any);
+    return created as any;
+  }
+  async getArtisanProfile(userId: string) {
+    return Array.from(this.profile.values()).find(p => p.userId === userId);
+  }
+  async getArtisanProfileById(id: string) { return this.profile.get(id); }
+  async getAllArtisans() {
+    return Array.from(this.profile.values()).map(p => ({ ...p, user: this.users.get(p.userId)! }));
+  }
+  async createArtisanProfile(profile: schema.InsertArtisanProfile) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...profile, id, rating: 0, completedMissions: 0, kycStatus: "pending", availability: true, isPremium: false };
+    this.profile.set(id, created as any);
+    return created as any;
+  }
+  async updateArtisanProfile(id: string, data: Partial<schema.ArtisanProfile>) {
+    const p = this.profile.get(id);
+    if (!p) return undefined;
+    const updated = { ...p, ...data };
+    this.profile.set(id, updated);
+    return updated;
+  }
+  async getMission(id: string) { return this.missions.get(id); }
+  async getMissionsByClient(clientId: string) {
+    return Array.from(this.missions.values()).filter(m => m.clientId === clientId);
+  }
+  async getMissionsByArtisan(artisanId: string) {
+    return Array.from(this.missions.values()).filter(m => m.artisanId === artisanId);
+  }
+  async getPendingMissions() {
+    return Array.from(this.missions.values()).filter(m => m.status === "pending");
+  }
+  async createMission(mission: schema.InsertMission) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...mission, id, status: "pending", createdAt: new Date() };
+    this.missions.set(id, created as any);
+    return created as any;
+  }
+  async updateMission(id: string, data: Partial<schema.Mission>) {
+    const m = this.missions.get(id);
+    if (!m) return undefined;
+    const updated = { ...m, ...data, updatedAt: new Date() };
+    this.missions.set(id, updated as any);
+    return updated as any;
+  }
+  async createQuote(quote: schema.InsertMissionQuote) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...quote, id, createdAt: new Date(), status: "pending" };
+    this.quotes.set(id, created as any);
+    return created as any;
+  }
+  async getQuotesByMission(missionId: string) {
+    return Array.from(this.quotes.values()).filter(q => q.missionId === missionId);
+  }
+  async createReview(review: schema.InsertReview) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...review, id, createdAt: new Date() };
+    this.reviews.set(id, created as any);
+    return created as any;
+  }
+  async getReviewsByUser(userId: string) {
+    return Array.from(this.reviews.values()).filter(r => r.toUserId === userId);
+  }
+  async getReviewsByMission(missionId: string) {
+    return Array.from(this.reviews.values()).filter(r => r.missionId === missionId);
+  }
+  async getWallet(userId: string) {
+    return Array.from(this.wallets.values()).find(w => w.userId === userId);
+  }
+  async createWallet(wallet: schema.InsertWallet) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...wallet, id, balance: wallet.balance || 0, escrowBalance: 0, currency: "EUR" };
+    this.wallets.set(id, created as any);
+    return created as any;
+  }
+  async updateWalletBalance(userId: string, amount: number) {
+    const w = await this.getWallet(userId);
+    if (!w) return undefined;
+    const updated = { ...w, balance: (w.balance || 0) + amount };
+    this.wallets.set(w.id, updated as any);
+    return updated as any;
+  }
+  async updateEscrowBalance(userId: string, amount: number) {
+    const w = await this.getWallet(userId);
+    if (!w) return undefined;
+    const updated = { ...w, escrowBalance: (w.escrowBalance || 0) + amount };
+    this.wallets.set(w.id, updated as any);
+    return updated as any;
+  }
+  async getWalletTransactions(walletId: string) {
+    return Array.from(this.transactions.values()).filter(t => t.walletId === walletId);
+  }
+  async createWalletTransaction(tx: schema.InsertWalletTransaction) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...tx, id, createdAt: new Date() };
+    this.transactions.set(id, created as any);
+    return created as any;
+  }
+  async createSignature(sig: schema.InsertSignature) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...sig, id, signedAt: new Date() };
+    this.signatures.set(id, created as any);
+    return created as any;
+  }
+  async getSignatureByMission(missionId: string) {
+    return Array.from(this.signatures.values()).find(s => s.missionId === missionId);
+  }
+  async createInvoice(invoice: schema.InsertInvoice) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...invoice, id, generatedAt: new Date() };
+    this.invoices.set(id, created as any);
+    return created as any;
+  }
+  async getInvoiceByMission(missionId: string) {
+    return Array.from(this.invoices.values()).find(i => i.missionId === missionId);
+  }
+  async getPortfolioItems(artisanId: string) {
+    return Array.from(this.portfolio.values()).filter(p => p.artisanId === artisanId);
+  }
+  async createPortfolioItem(item: schema.InsertPortfolioItem) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...item, id };
+    this.portfolio.set(id, created as any);
+    return created as any;
+  }
+  async getNotifications(userId: string) {
+    return Array.from(this.notifications.values()).filter(n => n.userId === userId);
+  }
+  async createNotification(notification: schema.InsertNotification) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...notification, id, createdAt: new Date(), read: false };
+    this.notifications.set(id, created as any);
+    return created as any;
+  }
+  async markNotificationRead(id: string) {
+    const n = this.notifications.get(id);
+    if (n) this.notifications.set(id, { ...n, read: true });
+  }
+  async getEquipment(userId: string) {
+    return Array.from(this.equipment.values()).filter(e => e.userId === userId);
+  }
+  async createEquipment(eqp: schema.InsertEquipment) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...eqp, id };
+    this.equipment.set(id, created as any);
+    return created as any;
+  }
+  async getInventory(artisanId: string) {
+    return Array.from(this.inventory.values()).filter(i => i.artisanId === artisanId);
+  }
+  async createInventoryItem(item: schema.InsertInventory) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...item, id };
+    this.inventory.set(id, created as any);
+    return created as any;
+  }
+  async updateInventoryQuantity(id: string, change: number) {
+    const i = this.inventory.get(id);
+    if (!i) return undefined;
+    const updated = { ...i, quantity: (i.quantity || 0) + change };
+    this.inventory.set(id, updated);
+    return updated;
+  }
+  async createDispute(dispute: schema.InsertDispute) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...dispute, id, createdAt: new Date(), status: "open" };
+    this.disputes.set(id, created as any);
+    return created as any;
+  }
+  async getDispute(id: string) { return this.disputes.get(id); }
+  async updateDispute(id: string, data: Partial<schema.Dispute>) {
+    const d = this.disputes.get(id);
+    if (!d) return undefined;
+    const updated = { ...d, ...data };
+    this.disputes.set(id, updated);
+    return updated;
+  }
+  async getDisputesByMission(missionId: string) {
+    return Array.from(this.disputes.values()).filter(d => d.missionId === missionId);
+  }
+  async createDisputeMessage(msg: schema.InsertDisputeMessage) {
+    const id = Math.random().toString(36).substring(2);
+    const created = { ...msg, id, createdAt: new Date() };
+    this.disputeMessages.set(id, created as any);
+    return created as any;
+  }
+  async getDisputeMessages(disputeId: string) {
+    return Array.from(this.disputeMessages.values()).filter(m => m.disputeId === disputeId);
+  }
+  async findArtisansInRadius(lat: number, lng: number, radiusKm: number, specialty?: string) {
+    return Array.from(this.profile.values())
+      .map(p => ({ ...p, user: this.users.get(p.userId)!, distance: 5 })) // Mock distance
+      .filter(p => !specialty || p.specialties?.includes(specialty));
+  }
+  async updateUserPoints(userId: string, type: 'loyalty' | 'eco', points: number) {
+    const u = this.users.get(userId);
+    if (!u) return undefined;
+    const updated = { ...u, [type === 'loyalty' ? 'loyaltyPoints' : 'ecoPoints']: (u[type === 'loyalty' ? 'loyaltyPoints' : 'ecoPoints'] || 0) + points };
+    this.users.set(userId, updated);
+    return updated;
+  }
+  async buyInventoryItem(itemId: string, buyerId: string, quantity: number) {
+    const item = this.inventory.get(itemId);
+    if (!item || (item.quantity || 0) < quantity) return false;
+    await this.updateInventoryQuantity(itemId, -quantity);
+    return true;
+  }
+}
+
+export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();

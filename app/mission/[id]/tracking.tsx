@@ -1,14 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    Pressable,
-    Dimensions,
-    Platform,
-    Linking,
-    Alert,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, Dimensions, Platform, Linking, Alert, Animated } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "@/components/MapWrapper";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";

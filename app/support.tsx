@@ -29,12 +29,12 @@ export default function SupportScreen() {
         style={[styles.header, { paddingTop: (insets.top || (Platform.OS === "web" ? 67 : 0)) + 8 }]}
       >
         <View style={styles.headerBar}>
-          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
+          <Pressable style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
           <Text style={styles.headerTitle}>Support</Text>
           <Pressable
-            style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.7 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.addBtn, pressed && { opacity: 0.7 }]}
             onPress={() => router.push("/support-ticket")}
           >
             <Ionicons name="add" size={24} color="#fff" />
@@ -50,7 +50,7 @@ export default function SupportScreen() {
           <Text style={styles.emptyTitle}>Aucun ticket</Text>
           <Text style={styles.emptySubtitle}>Contactez notre equipe en cas de probleme</Text>
           <Pressable
-            style={({ pressed }) => [styles.createBtn, pressed && { opacity: 0.9 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.createBtn, pressed && { opacity: 0.9 }]}
             onPress={() => router.push("/support-ticket")}
           >
             <LinearGradient colors={[Colors.accent, Colors.accentLight]} style={styles.createBtnGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
@@ -66,11 +66,11 @@ export default function SupportScreen() {
           scrollEnabled={!!tickets.length}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 20 }]}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => {
+          renderItem={({ item }: { item: any }) => {
             const sc = STATUS_CONFIG[item.status];
             return (
               <Pressable
-                style={({ pressed }) => [styles.ticketCard, pressed && { opacity: 0.95 }]}
+                style={({ pressed }: { pressed: boolean }) => [styles.ticketCard, pressed && { opacity: 0.95 }]}
                 onPress={() => router.push({ pathname: "/support-ticket", params: { ticketId: item.id } })}
               >
                 <View style={styles.ticketHeader}>

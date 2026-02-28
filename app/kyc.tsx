@@ -105,7 +105,7 @@ export default function KycScreen() {
         style={[styles.header, { paddingTop: (insets.top || (Platform.OS === "web" ? 67 : 0)) + 8 }]}
       >
         <View style={styles.headerBar}>
-          <Pressable style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
+          <Pressable style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.7 }]} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </Pressable>
           <Text style={styles.headerTitle}>Verification KYC</Text>
@@ -162,7 +162,7 @@ export default function KycScreen() {
                 </View>
                 {(doc.status === "not_uploaded" || doc.status === "rejected") && (
                   <Pressable
-                    style={({ pressed }) => [styles.uploadBtn, pressed && { opacity: 0.8 }]}
+                    style={({ pressed }: { pressed: boolean }) => [styles.uploadBtn, pressed && { opacity: 0.8 }]}
                     onPress={() => handleUpload(doc.key)}
                   >
                     <Ionicons name="cloud-upload" size={16} color={Colors.accent} />
@@ -177,7 +177,7 @@ export default function KycScreen() {
 
         {allUploaded && !allVerified && (
           <Pressable
-            style={({ pressed }) => [styles.verifyBtn, pressed && { opacity: 0.9 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.verifyBtn, pressed && { opacity: 0.9 }]}
             onPress={handleVerify}
             disabled={isVerifying}
           >

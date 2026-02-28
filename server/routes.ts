@@ -4,6 +4,26 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { generateInvoicePDF } from "./pdf";
 import { seedDatabase } from "./seed";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+// Configure multer for storage
+const storage_multer = multer.diskStorage({
+  destination: function (_req, _file, cb) {
+    const uploadPath = path.resolve(process.cwd(), "uploads");
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (_req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage_multer });
 
 const wsClients = new Map<string, Set<WebSocket>>();
 
@@ -28,6 +48,15 @@ async function broadcastToArea(lat: number, lng: number, radius: number, event: 
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await seedDatabase();
+
+  // File Upload Endpoint
+  app.post("/api/upload", upload.single("file"), (req: Request, res: Response) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl });
+  });
 
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
@@ -113,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Addresses
   app.get("/api/users/:id/addresses", async (req: Request, res: Response) => {
     try {
-      const addresses = await storage.getUserAddresses(req.params.id);
+      const addresses = await storage.getUserAddresses((req.params.id as string));
       res.json(addresses);
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -123,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users/:id/addresses", async (req: Request, res: Response) => {
     try {
       const address = await storage.createUserAddress({
-        userId: req.params.id,
+        userId: (req.params.id as string),
         ...req.body,
       });
       res.json(address);
@@ -168,7 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/artisans/:id", async (req: Request, res: Response) => {
     try {
-      const profile = await storage.getArtisanProfileById(req.params.id);
+      const profile = await storage.getArtisanProfileById((req.params.id as string));
       if (!profile) return res.status(404).json({ message: "Artisan not found" });
       const user = await storage.getUser(profile.userId);
       const reviews = await storage.getReviewsByUser(profile.userId);
@@ -181,7 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/artisans/:id/portfolio", async (req: Request, res: Response) => {
     try {
-      const items = await storage.getPortfolioItems(req.params.id);
+      const items = await storage.getPortfolioItems((req.params.id as string));
       res.json(items);
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -191,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/artisans/:id/portfolio", async (req: Request, res: Response) => {
     try {
       const item = await storage.createPortfolioItem({
-        artisanId: req.params.id,
+        artisanId: (req.params.id as string),
         ...req.body,
       });
       res.json(item);
@@ -202,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/artisans/:id", async (req: Request, res: Response) => {
     try {
-      const updated = await storage.updateArtisanProfile(req.params.id, req.body);
+      const updated = await storage.updateArtisanProfile((req.params.id as string), req.body);
       res.json(updated);
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -211,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/artisans/:id/kyc", async (req: Request, res: Response) => {
     try {
-      const updated = await storage.updateArtisanProfile(req.params.id, {
+      const updated = await storage.updateArtisanProfile((req.params.id as string), {
         kycStatus: "submitted",
         ...req.body,
       });
@@ -242,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/missions/:id", async (req: Request, res: Response) => {
     try {
-      const mission = await storage.getMission(req.params.id);
+      const mission = await storage.getMission((req.params.id as string));
       if (!mission) return res.status(404).json({ message: "Mission not found" });
       const quotes = await storage.getQuotesByMission(mission.id);
       const signature = await storage.getSignatureByMission(mission.id);
@@ -313,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/missions/:id", async (req: Request, res: Response) => {
     try {
-      const updated = await storage.updateMission(req.params.id, req.body);
+      const updated = await storage.updateMission((req.params.id as string), req.body);
       if (!updated) return res.status(404).json({ message: "Mission not found" });
 
       if (updated.artisanId) {
@@ -330,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/missions/:id/accept", async (req: Request, res: Response) => {
     try {
       const { artisanId } = req.body;
-      const updated = await storage.updateMission(req.params.id, {
+      const updated = await storage.updateMission((req.params.id as string), {
         artisanId,
         status: "accepted",
       });
@@ -356,10 +385,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/missions/:id/complete", async (req: Request, res: Response) => {
     try {
-      const mission = await storage.getMission(req.params.id);
+      const mission = await storage.getMission((req.params.id as string));
       if (!mission) return res.status(404).json({ message: "Mission not found" });
 
-      const updated = await storage.updateMission(req.params.id, {
+      const updated = await storage.updateMission((req.params.id as string), {
         status: "completed",
         finalPrice: req.body.finalPrice || mission.estimatedPrice,
       });
@@ -443,11 +472,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const sig = await storage.createSignature({
-        missionId: req.params.id,
+        missionId: (req.params.id as string),
         signatureData,
       });
 
-      const mission = await storage.getMission(req.params.id);
+      const mission = await storage.getMission((req.params.id as string));
       if (mission) {
         broadcastToUser(mission.clientId, "signature:received", sig);
         if (mission.artisanId) {
@@ -464,10 +493,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/missions/:id/quote", async (req: Request, res: Response) => {
     try {
       const quote = await storage.createQuote({
-        missionId: req.params.id,
+        missionId: (req.params.id as string),
         ...req.body,
       });
-      const mission = await storage.getMission(req.params.id);
+      const mission = await storage.getMission((req.params.id as string));
       if (mission) {
         broadcastToUser(mission.clientId, "quote:received", quote);
       }
@@ -503,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/wallet/:userId", async (req: Request, res: Response) => {
     try {
-      const wallet = await storage.getWallet(req.params.userId);
+      const wallet = await storage.getWallet((req.params.userId as string));
       if (!wallet) return res.status(404).json({ message: "Wallet not found" });
       const transactions = await storage.getWalletTransactions(wallet.id);
       res.json({ ...wallet, transactions });
@@ -514,7 +543,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/notifications/:userId", async (req: Request, res: Response) => {
     try {
-      const notifications = await storage.getNotifications(req.params.userId);
+      const notifications = await storage.getNotifications((req.params.userId as string));
       res.json(notifications);
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -523,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/notifications/:id/read", async (req: Request, res: Response) => {
     try {
-      await storage.markNotificationRead(req.params.id);
+      await storage.markNotificationRead((req.params.id as string));
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -533,7 +562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Equipment & Maintenance
   app.get("/api/users/:id/equipment", async (req: Request, res: Response) => {
     try {
-      const eqp = await storage.getEquipment(req.params.id);
+      const eqp = await storage.getEquipment((req.params.id as string));
       res.json(eqp);
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -543,7 +572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users/:id/equipment", async (req: Request, res: Response) => {
     try {
       const eqp = await storage.createEquipment({
-        userId: req.params.id,
+        userId: (req.params.id as string),
         ...req.body,
       });
       res.json(eqp);
@@ -555,7 +584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/artisans/:id/inventory", async (req: Request, res: Response) => {
     try {
       const item = await storage.createInventoryItem({
-        artisanId: req.params.id,
+        artisanId: (req.params.id as string),
         ...req.body,
       });
       res.json(item);
@@ -566,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/inventory/:id", async (req: Request, res: Response) => {
     try {
-      const updated = await storage.updateInventoryQuantity(req.params.id, req.body.change || 0);
+      const updated = await storage.updateInventoryQuantity((req.params.id as string), req.body.change || 0);
       res.json(updated);
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -576,7 +605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/inventory/:id/purchase", async (req: Request, res: Response) => {
     try {
       const { buyerId, quantity } = req.body;
-      const success = await storage.buyInventoryItem(req.params.id, buyerId, quantity || 1);
+      const success = await storage.buyInventoryItem((req.params.id as string), buyerId, quantity || 1);
       if (success) {
         res.json({ success: true });
       } else {
@@ -590,7 +619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Eco Impact
   app.post("/api/missions/:id/eco", async (req: Request, res: Response) => {
     try {
-      const mission = await storage.getMission(req.params.id);
+      const mission = await storage.getMission((req.params.id as string));
       if (!mission) return res.status(404).json({ message: "Mission not found" });
 
       const impact = await storage.updateUserPoints(mission.clientId, 'eco', req.body.points || 5);
@@ -638,7 +667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Disputes
   app.post("/api/missions/:id/dispute", async (req: Request, res: Response) => {
     try {
-      const mission = await storage.getMission(req.params.id);
+      const mission = await storage.getMission((req.params.id as string));
       if (!mission) return res.status(404).json({ message: "Mission not found" });
 
       const dispute = await storage.createDispute({
@@ -657,7 +686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/disputes/:id", async (req: Request, res: Response) => {
     try {
-      const dispute = await storage.getDispute(req.params.id);
+      const dispute = await storage.getDispute((req.params.id as string));
       if (!dispute) return res.status(404).json({ message: "Dispute not found" });
       res.json(dispute);
     } catch (e: any) {
@@ -667,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/disputes/:id/messages", async (req: Request, res: Response) => {
     try {
-      const messages = await storage.getDisputeMessages(req.params.id);
+      const messages = await storage.getDisputeMessages((req.params.id as string));
       res.json(messages);
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -677,7 +706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/disputes/:id/messages", async (req: Request, res: Response) => {
     try {
       const msg = await storage.createDisputeMessage({
-        disputeId: req.params.id,
+        disputeId: (req.params.id as string),
         ...req.body,
       });
       res.json(msg);
@@ -721,7 +750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 
-  wss.on("connection", (ws, req) => {
+  wss.on("connection", (ws: WebSocket, req) => {
     const url = new URL(req.url || "", `http://${req.headers.host}`);
     const userId = url.searchParams.get("userId");
 
@@ -738,7 +767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      ws.on("message", (raw) => {
+      ws.on("message", (raw: any) => {
         try {
           const msg = JSON.parse(raw.toString());
           if (msg.event === "location:update" && msg.data) {

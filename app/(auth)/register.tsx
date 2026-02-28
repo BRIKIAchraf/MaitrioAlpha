@@ -68,7 +68,7 @@ export default function RegisterScreen() {
       >
         <View style={styles.headerRow}>
           <Pressable
-            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
             onPress={() => router.back()}
           >
             <Ionicons name="chevron-back" size={24} color={Colors.text} />
@@ -166,7 +166,7 @@ export default function RegisterScreen() {
             ) : null}
 
             <Pressable
-              style={({ pressed }) => [styles.submitBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }, isLoading && { opacity: 0.7 }]}
+              style={({ pressed }: { pressed: boolean }) => [styles.submitBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }, isLoading && { opacity: 0.7 }]}
               onPress={handleRegister}
               disabled={isLoading}
             >
@@ -185,7 +185,7 @@ export default function RegisterScreen() {
             </Pressable>
 
             <Pressable
-              style={({ pressed }) => [styles.loginLink, pressed && { opacity: 0.7 }]}
+              style={({ pressed }: { pressed: boolean }) => [styles.loginLink, pressed && { opacity: 0.7 }]}
               onPress={() => router.push("/(auth)/login")}
             >
               <Text style={styles.loginLinkText}>Déjà un compte ? </Text>

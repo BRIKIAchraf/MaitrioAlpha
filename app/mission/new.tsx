@@ -133,7 +133,7 @@ export default function NewMissionScreen() {
       <View style={[styles.container, { paddingTop: insets.top || (Platform.OS === "web" ? 67 : 44) }]}>
         <View style={styles.topBar}>
           <Pressable
-            style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
+            style={({ pressed }: { pressed: boolean }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
             onPress={() => router.back()}
           >
             <Ionicons name="close" size={22} color={Colors.text} />
@@ -378,7 +378,7 @@ export default function NewMissionScreen() {
         <View style={[styles.bottomBar, { paddingBottom: insets.bottom || (Platform.OS === "web" ? 34 : 16) }]}>
           {step > 1 && (
             <Pressable
-              style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+              style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
               onPress={() => {
                 setStep((s) => (s - 1) as Step);
                 setError("");
@@ -389,7 +389,7 @@ export default function NewMissionScreen() {
             </Pressable>
           )}
           <Pressable
-            style={({ pressed }) => [
+            style={({ pressed }: { pressed: boolean }) => [
               styles.nextBtn,
               step === 1 && { flex: 1 },
               pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },

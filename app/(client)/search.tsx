@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
     View,
     Text,
@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
+import { apiRequest } from "@/lib/query-client";
 
 const CATEGORIES = [
     { id: "1", name: "Plomberie", icon: "water" },
@@ -24,28 +25,70 @@ const CATEGORIES = [
     { id: "6", name: "Climatisation", icon: "snow" },
 ];
 
-const MOCK_ARTISANS = [
-    { id: "1", name: "Jean Moreau", category: "Plomberie", rating: 4.9, reviews: 124, price: "€€", distance: "1.2 km", verified: true },
-    { id: "2", name: "Marc Durand", category: "Électricité", rating: 4.8, reviews: 89, price: "€€€", distance: "2.5 km", verified: true },
-    { id: "3", name: "Sophie Petit", category: "Plomberie", rating: 4.7, reviews: 56, price: "€", distance: "0.8 km", verified: false },
-    { id: "4", name: "Luc Simon", category: "Serrurerie", rating: 5.0, reviews: 210, price: "€€€", distance: "3.1 km", verified: true },
-];
+interface Artisan {
+    id: string;
+    userId: string;
+    name: string;
+    specialties: string; // JSON string from backend
+    rating: number;
+    completedMissions: number;
+    kycStatus: string;
+    avatarUrl?: string;
+    // UI focused fields
+    category?: string;
+    distance?: string;
+    verified?: boolean;
+    price?: string;
+    reviewCount?: number;
+}
 
 export default function SearchScreen() {
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [filterRating, setFilterRating] = useState(0);
+    const [artisans, setArtisans] = useState<Artisan[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    React.useEffect(() => {
+        fetchArtisans();
+    }, []);
+
+    const fetchArtisans = async () => {
+        try {
+            setIsLoading(true);
+            const res = await apiRequest("GET", "/api/artisans");
+            const data = await res.json();
+            setArtisans(data.map((a: any) => ({
+                ...a,
+                // Map backend specialties string to primary category
+                category: (() => {
+                    try {
+                        const specs = JSON.parse(a.specialties || "[]");
+                        return specs[0] || "Artisan";
+                    } catch { return "Artisan"; }
+                })(),
+                distance: "Proche de vous",
+                verified: a.kycStatus === "verified",
+                price: "€€",
+                reviewCount: a.reviewCount || 0
+            })));
+        } catch (error) {
+            console.error("Failed to fetch artisans:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const filteredArtisans = useMemo(() => {
-        return MOCK_ARTISANS.filter(artisan => {
-            const matchesQuery = artisan.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                artisan.category.toLowerCase().includes(searchQuery.toLowerCase());
+        return artisans.filter(artisan => {
+            const matchesQuery = (artisan.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (artisan.category || "").toLowerCase().includes(searchQuery.toLowerCase());
             const matchesCategory = selectedCategory ? artisan.category === selectedCategory : true;
-            const matchesRating = artisan.rating >= filterRating;
+            const matchesRating = (artisan.rating || 0) >= filterRating;
             return matchesQuery && matchesCategory && matchesRating;
         });
-    }, [searchQuery, selectedCategory, filterRating]);
+    }, [artisans, searchQuery, selectedCategory, filterRating]);
 
     const toggleCategory = (catName: string) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -81,7 +124,9 @@ export default function SearchScreen() {
             </LinearGradient>
 
             <View style={styles.resultsHeader}>
-                <Text style={styles.resultsTitle}>{filteredArtisans.length} artisans trouvés</Text>
+                <Text style={styles.resultsTitle}>
+                    {isLoading ? "Chargement..." : `${filteredArtisans.length} artisans trouvés`}
+                </Text>
                 <Pressable style={styles.filterBtn}>
                     <Ionicons name="options-outline" size={20} color={Colors.primary} />
                     <Text style={styles.filterBtnText}>Filtres</Text>
@@ -92,14 +137,22 @@ export default function SearchScreen() {
                 data={filteredArtisans}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
-                renderItem={({ item }) => (
+                onRefresh={fetchArtisans}
+                refreshing={isLoading}
+                renderItem={({ item }: { item: any }) => (
                     <Pressable
                         style={styles.card}
                         onPress={() => router.push(`/(client)/artisan/${item.id}`)}
                     >
                         <View style={styles.cardHeader}>
                             <View style={styles.avatarPlaceholder}>
-                                <Ionicons name="person" size={24} color={Colors.textMuted} />
+                                {item.avatarUrl ? (
+                                    <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#eee', overflow: 'hidden' }}>
+                                        <Text>IMG</Text>
+                                    </View>
+                                ) : (
+                                    <Ionicons name="person" size={24} color={Colors.textMuted} />
+                                )}
                             </View>
                             <View style={styles.cardInfo}>
                                 <View style={styles.nameRow}>
@@ -109,12 +162,12 @@ export default function SearchScreen() {
                                 <Text style={styles.category}>{item.category} • {item.distance}</Text>
                                 <View style={styles.ratingRow}>
                                     <Ionicons name="star" size={14} color="#F59E0B" />
-                                    <Text style={styles.ratingText}>{item.rating} ({item.reviews} avis)</Text>
+                                    <Text style={styles.ratingText}>{item.rating?.toFixed(1) || "0.0"} ({item.reviewCount || 0} avis)</Text>
                                     <Text style={styles.priceText}>{item.price}</Text>
                                 </View>
                             </View>
                         </View>
-                        <Pressable style={styles.bookBtn}>
+                        <Pressable style={styles.bookBtn} onPress={() => router.push(`/(client)/artisan/${item.id}`)}>
                             <Text style={styles.bookBtnText}>Profil Complet</Text>
                         </Pressable>
                     </Pressable>
@@ -122,7 +175,9 @@ export default function SearchScreen() {
                 ListEmptyComponent={() => (
                     <View style={styles.emptyContainer}>
                         <Ionicons name="search-outline" size={60} color={Colors.border} />
-                        <Text style={styles.emptyText}>Aucun artisan ne correspond à votre recherche.</Text>
+                        <Text style={styles.emptyText}>
+                            {isLoading ? "Recherche en cours..." : "Aucun artisan ne correspond à votre recherche."}
+                        </Text>
                     </View>
                 )}
             />

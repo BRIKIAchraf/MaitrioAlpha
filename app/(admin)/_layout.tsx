@@ -31,7 +31,7 @@ export default function AdminLayout() {
                 name="index"
                 options={{
                     title: "Dashboard",
-                    tabBarIcon: ({ color, size }) => (
+                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
                         <Ionicons name="stats-chart" size={size} color={color} />
                     ),
                 }}
@@ -40,7 +40,7 @@ export default function AdminLayout() {
                 name="users"
                 options={{
                     title: "Utilisateurs",
-                    tabBarIcon: ({ color, size }) => (
+                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
                         <Ionicons name="people" size={size} color={color} />
                     ),
                 }}
@@ -49,7 +49,7 @@ export default function AdminLayout() {
                 name="artisans"
                 options={{
                     title: "Artisans",
-                    tabBarIcon: ({ color, size }) => (
+                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
                         <Ionicons name="construct" size={size} color={color} />
                     ),
                 }}
@@ -58,7 +58,7 @@ export default function AdminLayout() {
                 name="disputes"
                 options={{
                     title: "Litiges",
-                    tabBarIcon: ({ color, size }) => (
+                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
                         <Ionicons name="alert-circle" size={size} color={color} />
                     ),
                 }}

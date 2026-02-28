@@ -1,0 +1,150 @@
+app/(admin)/artisans.tsx(7,5): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/(admin)/artisans.tsx(9,5): error TS2614: Module '"react-native"' has no exported member 'RefreshControl'. Did you mean to use 'import RefreshControl from "react-native"' instead?
+app/(admin)/artisans.tsx(33,27): error TS2347: Untyped function calls may not accept type arguments.
+app/(admin)/disputes.tsx(3,10): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/(admin)/disputes.tsx(47,17): error TS2339: Property 'FlatList' does not exist on type 'typeof import("react-native")'.
+app/(admin)/disputes.tsx(49,31): error TS7006: Parameter 'item' implicitly has an 'any' type.
+app/(admin)/missions.tsx(3,10): error TS2614: Module '"react-native"' has no exported member 'RefreshControl'. Did you mean to use 'import RefreshControl from "react-native"' instead?
+app/(admin)/notifications.tsx(8,5): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/(admin)/users.tsx(62,21): error TS2339: Property 'TextInput' does not exist on type 'typeof import("react-native")'.
+app/(admin)/users.tsx(70,17): error TS2339: Property 'FlatList' does not exist on type 'typeof import("react-native")'.
+app/(admin)/users.tsx(72,31): error TS7006: Parameter 'item' implicitly has an 'any' type.
+app/(artisan)/_layout.tsx(55,52): error TS2322: Type '{ intensity: number; tint: "light"; style: any; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<BlurView> & Readonly<BlurViewProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<BlurView> & Readonly<BlurViewProps>'.
+app/(artisan)/_layout.tsx(65,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+app/(artisan)/_layout.tsx(65,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+app/(artisan)/_layout.tsx(77,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+app/(artisan)/_layout.tsx(77,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+app/(artisan)/_layout.tsx(89,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+app/(artisan)/_layout.tsx(89,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+app/(artisan)/_layout.tsx(101,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+app/(artisan)/_layout.tsx(101,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+app/(artisan)/academy.tsx(2,71): error TS2300: Duplicate identifier 'Animated'.
+app/(artisan)/academy.tsx(2,71): error TS2614: Module '"react-native"' has no exported member 'Animated'. Did you mean to use 'import Animated from "react-native"' instead?
+app/(artisan)/academy.tsx(8,8): error TS2300: Duplicate identifier 'Animated'.
+app/(artisan)/availability.tsx(9,5): error TS2614: Module '"react-native"' has no exported member 'Switch'. Did you mean to use 'import Switch from "react-native"' instead?
+app/(artisan)/marketplace.tsx(9,5): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/(artisan)/missions.tsx(6,3): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/(artisan)/missions.tsx(10,3): error TS2614: Module '"react-native"' has no exported member 'RefreshControl'. Did you mean to use 'import RefreshControl from "react-native"' instead?
+app/(artisan)/missions.tsx(59,31): error TS2304: Cannot find name 'useState'.
+app/(artisan)/missions.tsx(61,25): error TS2347: Untyped function calls may not accept type arguments.
+app/(artisan)/portfolio.tsx(33,27): error TS2347: Untyped function calls may not accept type arguments.
+app/(artisan)/services.tsx(8,5): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/(artisan)/wallet.tsx(9,5): error TS2614: Module '"react-native"' has no exported member 'ActivityIndicator'. Did you mean to use 'import ActivityIndicator from "react-native"' instead?
+app/(auth)/2fa.tsx(6,5): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/(auth)/2fa.tsx(8,5): error TS2614: Module '"react-native"' has no exported member 'KeyboardAvoidingView'. Did you mean to use 'import KeyboardAvoidingView from "react-native"' instead?
+app/(auth)/2fa.tsx(70,35): error TS7006: Parameter 'ref' implicitly has an 'any' type.
+app/(auth)/2fa.tsx(73,44): error TS7006: Parameter 'text' implicitly has an 'any' type.
+app/(auth)/2fa.tsx(76,44): error TS7031: Binding element 'nativeEvent' implicitly has an 'any' type.
+app/(auth)/login.tsx(6,3): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/(auth)/login.tsx(8,3): error TS2614: Module '"react-native"' has no exported member 'ActivityIndicator'. Did you mean to use 'import ActivityIndicator from "react-native"' instead?
+app/(auth)/login.tsx(10,3): error TS2614: Module '"react-native"' has no exported member 'KeyboardAvoidingView'. Did you mean to use 'import KeyboardAvoidingView from "react-native"' instead?
+app/(auth)/register.tsx(6,3): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/(auth)/register.tsx(8,3): error TS2614: Module '"react-native"' has no exported member 'ActivityIndicator'. Did you mean to use 'import ActivityIndicator from "react-native"' instead?
+app/(auth)/register.tsx(10,3): error TS2614: Module '"react-native"' has no exported member 'KeyboardAvoidingView'. Did you mean to use 'import KeyboardAvoidingView from "react-native"' instead?
+app/(auth)/register.tsx(24,18): error TS2347: Untyped function calls may not accept type arguments.
+app/(auth)/register.tsx(47,87): error TS2353: Object literal may only specify known properties, and 'referredBy' does not exist in type 'RegisterData'.
+app/(client)/_layout.tsx(2,32): error TS2614: Module '"react-native"' has no exported member 'useColorScheme'. Did you mean to use 'import useColorScheme from "react-native"' instead?
+app/(client)/_layout.tsx(56,52): error TS2322: Type '{ intensity: number; tint: "light"; style: any; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<BlurView> & Readonly<BlurViewProps>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<BlurView> & Readonly<BlurViewProps>'.
+app/(client)/_layout.tsx(66,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+app/(client)/_layout.tsx(66,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+app/(client)/_layout.tsx(78,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+app/(client)/_layout.tsx(78,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+app/(client)/_layout.tsx(90,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+app/(client)/_layout.tsx(90,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+app/(client)/_layout.tsx(102,26): error TS7031: Binding element 'color' implicitly has an 'any' type.
+app/(client)/_layout.tsx(102,33): error TS7031: Binding element 'size' implicitly has an 'any' type.
+app/(client)/chat.tsx(6,3): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/(client)/chat.tsx(37,24): error TS7006: Parameter 'item' implicitly has an 'any' type.
+app/(client)/disputes.tsx(57,37): error TS2339: Property 'RefreshControl' does not exist on type 'typeof import("react-native")'.
+app/(client)/index.tsx(2,86): error TS2614: Module '"react-native"' has no exported member 'Vibration'. Did you mean to use 'import Vibration from "react-native"' instead?
+app/(client)/index.tsx(2,97): error TS2300: Duplicate identifier 'Animated'.
+app/(client)/index.tsx(2,97): error TS2614: Module '"react-native"' has no exported member 'Animated'. Did you mean to use 'import Animated from "react-native"' instead?
+app/(client)/index.tsx(7,8): error TS2300: Duplicate identifier 'Animated'.
+app/(client)/index.tsx(21,10): error TS2614: Module '"@/components/LottieAnimation"' has no exported member 'LottieAnimation'. Did you mean to use 'import LottieAnimation from "@/components/LottieAnimation"' instead?
+app/(client)/prices.tsx(8,5): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/(client)/scan.tsx(8,5): error TS2614: Module '"react-native"' has no exported member 'Animated'. Did you mean to use 'import Animated from "react-native"' instead?
+app/(client)/scan.tsx(92,25): error TS2322: Type '{ style: any; facing: "back"; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<CameraView> & Pick<Readonly<CameraViewProps>, never> & InexactPartial<...> & InexactPartial<...>'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<CameraView> & Pick<Readonly<CameraViewProps>, never> & InexactPartial<...> & InexactPartial<...>'.
+app/(client)/search.tsx(6,5): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/(client)/search.tsx(7,5): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/(client)/search.tsx(138,32): error TS7006: Parameter 'item' implicitly has an 'any' type.
+app/_layout.tsx(23,10): error TS2305: Module '"expo-router"' has no exported member 'useSegments'.
+app/_layout.tsx(94,33): error TS2322: Type '{ children: Element; style: { flex: number; }; }' is not assignable to type 'IntrinsicAttributes & GestureHandlerRootViewProps'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & GestureHandlerRootViewProps'.
+app/chat/[id].tsx(6,3): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/chat/[id].tsx(7,3): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/chat/[id].tsx(10,3): error TS2614: Module '"react-native"' has no exported member 'KeyboardAvoidingView'. Did you mean to use 'import KeyboardAvoidingView from "react-native"' instead?
+app/chat/[id].tsx(24,18): error TS2347: Untyped function calls may not accept type arguments.
+app/chat/[id].tsx(104,26): error TS7006: Parameter 'item' implicitly has an 'any' type.
+app/dispute/[id].tsx(8,5): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/dispute/[id].tsx(9,5): error TS2614: Module '"react-native"' has no exported member 'KeyboardAvoidingView'. Did you mean to use 'import KeyboardAvoidingView from "react-native"' instead?
+app/dispute/[id].tsx(43,32): error TS2347: Untyped function calls may not accept type arguments.
+app/dispute/[id].tsx(98,33): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+app/housing.tsx(153,58): error TS2339: Property 'checkOutTime' does not exist on type 'Mission'.
+app/index.tsx(2,67): error TS2300: Duplicate identifier 'Animated'.
+app/index.tsx(2,67): error TS2614: Module '"react-native"' has no exported member 'Animated'. Did you mean to use 'import Animated from "react-native"' instead?
+app/index.tsx(5,8): error TS2300: Duplicate identifier 'Animated'.
+app/kyc.tsx(2,74): error TS2614: Module '"react-native"' has no exported member 'ActivityIndicator'. Did you mean to use 'import ActivityIndicator from "react-native"' instead?
+app/mission/[id].tsx(10,3): error TS2614: Module '"react-native"' has no exported member 'ActivityIndicator'. Did you mean to use 'import ActivityIndicator from "react-native"' instead?
+app/mission/[id].tsx(11,3): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/mission/[id].tsx(50,18): error TS2347: Untyped function calls may not accept type arguments.
+app/mission/[id].tsx(249,25): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/mission/[id].tsx(312,18): error TS2339: Property 'quote' does not exist on type 'Mission'.
+app/mission/[id].tsx(362,79): error TS2339: Property 'min' does not exist on type 'number | { min: number; max: number; }'.
+  Property 'min' does not exist on type 'number'.
+app/mission/[id].tsx(362,110): error TS2339: Property 'max' does not exist on type 'number | { min: number; max: number; }'.
+  Property 'max' does not exist on type 'number'.
+app/mission/[id].tsx(366,22): error TS2339: Property 'payment' does not exist on type 'Mission'.
+app/mission/[id].tsx(368,80): error TS2339: Property 'payment' does not exist on type 'Mission'.
+app/mission/[id].tsx(370,35): error TS2339: Property 'payment' does not exist on type 'Mission'.
+app/mission/[id].tsx(372,36): error TS2339: Property 'payment' does not exist on type 'Mission'.
+app/mission/[id].tsx(374,96): error TS2339: Property 'payment' does not exist on type 'Mission'.
+app/mission/[id].tsx(375,30): error TS2339: Property 'payment' does not exist on type 'Mission'.
+app/mission/[id].tsx(375,96): error TS2339: Property 'payment' does not exist on type 'Mission'.
+app/mission/[id].tsx(375,156): error TS2339: Property 'payment' does not exist on type 'Mission'.
+app/mission/[id].tsx(468,30): error TS7006: Parameter 't' implicitly has an 'any' type.
+app/mission/[id].tsx(501,18): error TS2339: Property 'report' does not exist on type 'Mission'.
+app/mission/[id].tsx(504,54): error TS2339: Property 'report' does not exist on type 'Mission'.
+app/mission/[id].tsx(514,24): error TS2339: Property 'afterPhotos' does not exist on type 'Mission'.
+app/mission/[id].tsx(534,68): error TS2339: Property 'quote' does not exist on type 'Mission'.
+app/mission/[id].tsx(544,20): error TS2339: Property 'quote' does not exist on type 'Mission'.
+app/mission/[id].tsx(546,30): error TS2339: Property 'quote' does not exist on type 'Mission'.
+app/mission/[id].tsx(550,29): error TS2339: Property 'quote' does not exist on type 'Mission'.
+app/mission/[id]/completion.tsx(289,29): error TS2339: Property 'ActivityIndicator' does not exist on type 'typeof import("react-native")'.
+app/mission/[id]/quote.tsx(8,5): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/mission/[id]/tracking.tsx(2,67): error TS2614: Module '"react-native"' has no exported member 'Linking'. Did you mean to use 'import Linking from "react-native"' instead?
+app/mission/[id]/tracking.tsx(2,83): error TS2300: Duplicate identifier 'Animated'.
+app/mission/[id]/tracking.tsx(2,83): error TS2614: Module '"react-native"' has no exported member 'Animated'. Did you mean to use 'import Animated from "react-native"' instead?
+app/mission/[id]/tracking.tsx(8,8): error TS2300: Duplicate identifier 'Animated'.
+app/mission/[id]/tracking.tsx(258,22): error TS2304: Cannot find name 'LottieAnimation'.
+app/mission/new.tsx(6,3): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/mission/new.tsx(10,3): error TS2614: Module '"react-native"' has no exported member 'KeyboardAvoidingView'. Did you mean to use 'import KeyboardAvoidingView from "react-native"' instead?
+app/mission/new.tsx(11,3): error TS2614: Module '"react-native"' has no exported member 'ActivityIndicator'. Did you mean to use 'import ActivityIndicator from "react-native"' instead?
+app/mission/new.tsx(48,18): error TS2347: Untyped function calls may not accept type arguments.
+app/mission/new.tsx(113,9): error TS2353: Object literal may only specify known properties, and 'escrowAmount' does not exist in type 'CreateMissionData'.
+app/mission/new.tsx(240,20): error TS2322: Type '{ children: Element; intensity: number; tint: "light"; style: any; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<BlurView> & Readonly<BlurViewProps>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<BlurView> & Readonly<BlurViewProps>'.
+app/onboarding.tsx(2,67): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/rankings.tsx(2,34): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/rankings.tsx(63,32): error TS7006: Parameter 'item' implicitly has an 'any' type.
+app/support-ticket.tsx(2,67): error TS2614: Module '"react-native"' has no exported member 'TextInput'. Did you mean to use 'import TextInput from "react-native"' instead?
+app/support-ticket.tsx(2,85): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/support-ticket.tsx(2,95): error TS2614: Module '"react-native"' has no exported member 'KeyboardAvoidingView'. Did you mean to use 'import KeyboardAvoidingView from "react-native"' instead?
+app/support-ticket.tsx(2,117): error TS2614: Module '"react-native"' has no exported member 'Linking'. Did you mean to use 'import Linking from "react-native"' instead?
+app/support-ticket.tsx(22,24): error TS2347: Untyped function calls may not accept type arguments.
+app/support.tsx(2,55): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/support.tsx(65,26): error TS7006: Parameter 'item' implicitly has an 'any' type.
+app/support.tsx(70,24): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'Record<TicketStatus, { label: string; color: string; bg: string; icon: string; }>'.
+app/wallet.tsx(2,67): error TS2614: Module '"react-native"' has no exported member 'FlatList'. Did you mean to use 'import FlatList from "react-native"' instead?
+app/wallet.tsx(100,28): error TS7006: Parameter 'item' implicitly has an 'any' type.
+components/ErrorFallback.tsx(9,3): error TS2614: Module '"react-native"' has no exported member 'Modal'. Did you mean to use 'import Modal from "react-native"' instead?
+components/ErrorFallback.tsx(10,3): error TS2614: Module '"react-native"' has no exported member 'useColorScheme'. Did you mean to use 'import useColorScheme from "react-native"' instead?
+components/KeyboardAwareScrollViewCompat.tsx(2,32): error TS2724: '"react-native"' has no exported member named 'ScrollViewProps'. Did you mean 'ScrollView'?
+server/routes.ts(3,44): error TS7016: Could not find a declaration file for module 'ws'. 'C:/Users/Ashra/Downloads/MaitrioAlpha/MaitrioAlpha/node_modules/ws/wrapper.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/ws` if it exists or add a new declaration (.d.ts) file containing `declare module 'ws';`
+server/routes.ts(753,40): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/storage.ts(3,22): error TS7016: Could not find a declaration file for module 'pg'. 'C:/Users/Ashra/Downloads/MaitrioAlpha/MaitrioAlpha/node_modules/pg/esm/index.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/pg` if it exists or add a new declaration (.d.ts) file containing `declare module 'pg';`

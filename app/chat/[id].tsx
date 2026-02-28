@@ -77,7 +77,7 @@ export default function ChatScreen() {
         >
           <View style={styles.headerBar}>
             <Pressable
-              style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+              style={({ pressed }: { pressed: boolean }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
               onPress={() => router.back()}
             >
               <Ionicons name="chevron-back" size={24} color="#fff" />
@@ -109,7 +109,7 @@ export default function ChatScreen() {
           inverted
           showsVerticalScrollIndicator={false}
           scrollEnabled={!!convMessages.length}
-          renderItem={({ item }) => {
+          renderItem={({ item }: { item: any }) => {
             const isMe = item.senderId === user?.id;
             return <MessageBubble message={item} isMe={isMe} />;
           }}
@@ -148,7 +148,7 @@ export default function ChatScreen() {
             <Ionicons name="mic-outline" size={24} color={Colors.primary} />
           </Pressable>
           <Pressable
-            style={({ pressed }) => [
+            style={({ pressed }: { pressed: boolean }) => [
               styles.sendBtn,
               !text.trim() && styles.sendBtnDisabled,
               pressed && { opacity: 0.8 },

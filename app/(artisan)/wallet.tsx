@@ -89,7 +89,7 @@ export default function ArtisanWalletScreen() {
                 </View>
 
                 <Pressable
-                    style={({ pressed }) => [styles.payoutBtn, pressed && { opacity: 0.8 }]}
+                    style={({ pressed }: { pressed: boolean }) => [styles.payoutBtn, pressed && { opacity: 0.8 }]}
                     onPress={handleInstantPayout}
                 >
                     <Ionicons name="flash" size={18} color={Colors.primary} />
