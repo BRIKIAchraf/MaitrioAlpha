@@ -89,6 +89,7 @@ export default function VisionScanScreen() {
 
     return (
         <View style={styles.container}>
+            {/* @ts-ignore */}
             <CameraView style={StyleSheet.absoluteFill as any} facing="back" />
             <LinearGradient colors={["transparent", "rgba(15,23,42,0.6)"]} style={StyleSheet.absoluteFill as any} />
 

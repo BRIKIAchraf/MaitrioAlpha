@@ -44,6 +44,7 @@ export interface RegisterData {
   password: string;
   role: UserRole;
   phone?: string;
+  referredBy?: string;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);

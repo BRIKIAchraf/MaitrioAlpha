@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Pressable, Dimensions, Platform, Animated } from "react-native";
-import { router } from "expo-router";
+import { View, Text, StyleSheet, Pressable, Dimensions, Platform } from "react-native";
+import { router, Redirect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
@@ -64,8 +64,19 @@ export default function WelcomeScreen() {
     opacity: buttonsOpacity.value,
   }));
 
-  if (isLoading) return null;
-  if (user) return null;
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+      </View>
+    );
+  }
+  
+  if (user) {
+    if (user.role === 'client') return <Redirect href="/(client)" />;
+    if (user.role === 'artisan') return <Redirect href="/(artisan)" />;
+    if (user.role === 'admin') return <Redirect href="/(admin)" />;
+    return <Redirect href="/(client)" />;
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top || (Platform.OS === "web" ? 67 : 0), paddingBottom: insets.bottom || (Platform.OS === "web" ? 34 : 0) }]}>

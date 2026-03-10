@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, Platform, Dimensions, Alert, Vibration, Animated } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Platform, Dimensions, Alert, Vibration } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,7 +18,7 @@ import { useMissions } from "@/context/mission-context";
 import { apiRequest } from "@/utils/api";
 import { useMutation } from "@tanstack/react-query";
 
-import { LottieAnimation } from "@/components/LottieAnimation";
+import LottieAnimation from "@/components/LottieAnimation";
 
 const { width } = Dimensions.get("window");
 

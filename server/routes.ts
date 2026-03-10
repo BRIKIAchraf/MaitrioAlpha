@@ -100,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { password: _, ...safeUser } = user;
 
-      let profile = null;
+      let profile: any = null;
       if (user.role === "artisan") {
         profile = await storage.getArtisanProfile(user.id);
       }

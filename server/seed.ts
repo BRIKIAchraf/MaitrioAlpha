@@ -239,7 +239,7 @@ export async function seedDatabase() {
     return;
   }
 
-  const clients = [];
+  const clients: any[] = [];
   for (const c of clientsData) {
     const user = await storage.createUser(c);
     await storage.createWallet({ userId: user.id, balance: 500, currency: "EUR" });
@@ -247,7 +247,7 @@ export async function seedDatabase() {
     console.log(`  Created client: ${c.firstName} ${c.lastName}`);
   }
 
-  const artisanUsers = [];
+  const artisanUsers: any[] = [];
   for (const a of artisansData) {
     const user = await storage.createUser({
       username: a.username,

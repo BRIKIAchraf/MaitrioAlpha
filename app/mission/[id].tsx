@@ -246,7 +246,7 @@ export default function MissionDetailScreen() {
     setIsLoading(true);
     const conv = await getOrCreateConversation(
       mission.id, mission.title,
-      mission.clientId, mission.clientName,
+      mission.clientId, mission.clientName || "",
       mission.artisanId, mission.artisanName
     );
     setIsLoading(false);

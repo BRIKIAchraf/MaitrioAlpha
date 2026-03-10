@@ -2,6 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "strict": true,
+    "noImplicitAny": false,
     "jsx": "react-native",
     "moduleResolution": "Bundler",
     "allowJs": true,

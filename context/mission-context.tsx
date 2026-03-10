@@ -71,7 +71,7 @@ export interface Mission {
   checkInPhotos?: string[];
   checkOutPhotos?: string[];
   budget?: number;
-  estimatedPrice?: number | { min: number; max: number };
+  estimatedPrice?: any;
   finalPrice?: number;
   estimatedDuration?: string;
   urgency: UrgencyLevel;
@@ -81,6 +81,7 @@ export interface Mission {
   isSos?: boolean;
   createdAt: string;
   updatedAt: string;
+  [key: string]: any;
 }
 
 interface MissionContextValue {
@@ -113,6 +114,7 @@ export interface CreateMissionData {
   budget?: number;
   urgency?: UrgencyLevel;
   isSos?: boolean;
+  escrowAmount?: number;
 }
 
 const MissionContext = createContext<MissionContextValue | null>(null);
