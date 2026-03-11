@@ -1,41 +1,29 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiRequest } from "@/lib/query-client";
 
 export type UserRole = "client" | "artisan" | "admin";
 
 export interface User {
   id: string;
-  username: string;
-  firstName?: string;
-  lastName?: string;
   name: string;
   email: string;
   role: UserRole;
-  verified?: boolean;
   phone?: string;
   avatar?: string;
-  avatarUrl?: string;
   isPremium?: boolean;
   loyaltyPoints?: number;
-  ecoPoints?: number;
   trustScore?: number;
-  housingScore?: number;
   kycStatus?: "pending" | "verified" | "rejected";
-  revenue?: number;
-  referralCount?: number;
   createdAt: string;
-  artisanProfile?: any;
-  wallet?: any;
 }
 
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
-  updateUser: (data: Partial<User>) => Promise<void>;
+  updateUser: (data: Partial<User>) => void;
 }
 
 export interface RegisterData {
@@ -44,12 +32,41 @@ export interface RegisterData {
   password: string;
   role: UserRole;
   phone?: string;
-  referredBy?: string;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const STORAGE_KEY = "@maitrio_user";
 
-const STORAGE_KEY = "@maison_user";
+// Demo accounts for testing
+const DEMO_ACCOUNTS: Record<string, User> = {
+  "client@demo.com": {
+    id: "c1",
+    name: "Sophie Martin",
+    email: "client@demo.com",
+    role: "client",
+    isPremium: false,
+    loyaltyPoints: 350,
+    trustScore: 92,
+    kycStatus: "verified",
+    createdAt: new Date().toISOString(),
+  },
+  "artisan@demo.com": {
+    id: "a1",
+    name: "Mohamed Benali",
+    email: "artisan@demo.com",
+    role: "artisan",
+    trustScore: 95,
+    kycStatus: "verified",
+    createdAt: new Date().toISOString(),
+  },
+  "admin@demo.com": {
+    id: "adm1",
+    name: "Admin Maitrio",
+    email: "admin@demo.com",
+    role: "admin",
+    createdAt: new Date().toISOString(),
+  },
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -62,50 +79,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadUser() {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setUser(JSON.parse(stored));
-      }
-    } catch { }
+      if (stored) setUser(JSON.parse(stored));
+    } catch {}
     setIsLoading(false);
   }
 
-  async function login(username: string, password: string) {
-    const res = await apiRequest("POST", "/api/auth/login", { username, password });
-    const data = await res.json();
-    const u: User = {
-      ...data,
-      name: [data.firstName, data.lastName].filter(Boolean).join(" ") || data.username,
-      email: data.email || "",
-      createdAt: data.createdAt || new Date().toISOString(),
-    };
-    setUser(u);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+  async function login(email: string, password: string) {
+    const demoUser = DEMO_ACCOUNTS[email.toLowerCase()];
+    if (demoUser && password.length >= 4) {
+      setUser(demoUser);
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(demoUser));
+      return;
+    }
+    throw new Error("Identifiants invalides. Utilisez client@demo.com, artisan@demo.com ou admin@demo.com");
   }
 
   async function register(data: RegisterData) {
-    const nameParts = data.name.split(" ");
-    const firstName = nameParts[0] || data.name;
-    const lastName = nameParts.slice(1).join(" ") || "";
-    const username = data.email.split("@")[0] + "." + Date.now().toString(36);
-
-    const res = await apiRequest("POST", "/api/auth/register", {
-      username,
-      password: data.password,
-      email: data.email,
-      phone: data.phone,
-      firstName,
-      lastName,
-      role: data.role,
-    });
-    const created = await res.json();
-    const u: User = {
-      ...created,
+    const newUser: User = {
+      id: "u_" + Date.now(),
       name: data.name,
       email: data.email,
-      createdAt: created.createdAt || new Date().toISOString(),
+      role: data.role,
+      phone: data.phone,
+      isPremium: false,
+      loyaltyPoints: 0,
+      trustScore: 0,
+      kycStatus: "pending",
+      createdAt: new Date().toISOString(),
     };
-    setUser(u);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+    setUser(newUser);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
   }
 
   async function logout() {
@@ -113,11 +116,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.removeItem(STORAGE_KEY);
   }
 
-  async function updateUser(data: Partial<User>) {
+  function updateUser(data: Partial<User>) {
     if (!user) return;
     const updated = { ...user, ...data };
     setUser(updated);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   }
 
   const value = useMemo<AuthContextValue>(

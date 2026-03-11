@@ -1,32 +1,35 @@
 {
   "expo": {
-    "name": "Maison",
-    "slug": "my-app",
+    "name": "blink-expo-starter",
+    "slug": "blink-expo-starter",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "scheme": "blinkexpo",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FAFBFF"
+      "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.myapp"
+      "supportsTablet": true,
+      "bundleIdentifier": "com.blink.expostarter"
     },
     "android": {
-      "package": "com.myapp",
       "adaptiveIcon": {
-        "backgroundColor": "#FAFBFF",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      }
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.blink.expostarter"
     },
     "web": {
+      "bundler": "metro",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -35,8 +38,15 @@
       "expo-web-browser"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": false
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
     }
   }
 }

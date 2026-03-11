@@ -1,6 +1,7 @@
 const Colors = {
   primary: "#1B2C4E",
   primaryLight: "#2A4070",
+  primaryDark: "#0F1E38",
   accent: "#C9A84C",
   accentLight: "#E8C97A",
   accentSoft: "#FDF6E3",
@@ -23,13 +24,6 @@ const Colors = {
   shadow: "rgba(27, 44, 78, 0.08)",
   shadowDark: "rgba(27, 44, 78, 0.15)",
   overlay: "rgba(27, 44, 78, 0.5)",
-  light: {
-    text: "#1A1A2E",
-    background: "#FAFBFF",
-    tint: "#1B2C4E",
-    tabIconDefault: "#9AA3B5",
-    tabIconSelected: "#1B2C4E",
-  },
 };
 
 export default Colors;
